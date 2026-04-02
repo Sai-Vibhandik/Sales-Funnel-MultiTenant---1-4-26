@@ -168,19 +168,53 @@ const ROLE_DISPLAY_NAMES = {
 function OverviewTab({ stats, loading, plans }) {
   if (loading) return <Spinner size="lg" className="mx-auto mt-8" />;
 
-  // Prepare chart data - exclude platform_admin from role chart
-  const usersByRoleData = Object.entries(stats?.usersByRole || {})
-    .filter(([role]) => role !== 'platform_admin') // Exclude platform_admin
-    .map(([role, count], index) => ({
-      name: ROLE_DISPLAY_NAMES[role] || role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
-      value: count,
-      color: ROLE_CHART_COLORS[index % ROLE_CHART_COLORS.length],
-    }));
+  // Map plan value to display name using plans data
+  const planNameToDisplay = (planValue) => {
+    if (!planValue) return 'Free';
 
-  // Map plan name to display name (plan field now stores plan name directly)
-  const planNameToDisplay = (planName) => {
-    return planName || 'Free';
+    // Normalize common variations
+    const normalizedValue = planValue.toLowerCase().trim();
+
+    // Handle "Free Plan", "Free", "free plan", etc. - all map to "Free"
+    if (normalizedValue === 'free' || normalizedValue === 'free plan' || normalizedValue === 'freeplan') {
+      return 'Free';
+    }
+
+    // Try to find matching plan by name or displayName (case-insensitive)
+    const matchingPlan = plans?.find(p =>
+      p.name?.toLowerCase() === normalizedValue ||
+      p.displayName?.toLowerCase() === normalizedValue ||
+      p._id?.toString() === planValue
+    );
+
+    if (matchingPlan) {
+      return matchingPlan.displayName || matchingPlan.name;
+    }
+
+    // Handle legacy tier values (without "Plan" suffix)
+    const legacyMapping = {
+      'starter': 'Starter',
+      'pro': 'Pro',
+      'enterprise': 'Enterprise',
+      'growth': 'Growth',
+      'scale': 'Scale',
+      'grand': 'Grand'
+    };
+
+    // Remove "Plan" suffix if present (e.g., "Starter Plan" -> "Starter")
+    const withoutPlanSuffix = normalizedValue.replace(/\s*plan$/i, '');
+
+    if (legacyMapping[withoutPlanSuffix]) {
+      return legacyMapping[withoutPlanSuffix];
+    }
+
+    // Capitalize as fallback (remove "Plan" suffix first)
+    const cleanValue = planValue.replace(/\s*plan$/i, '');
+    return cleanValue.charAt(0).toUpperCase() + cleanValue.slice(1).toLowerCase();
   };
+
+  // Get valid plan names from database for comparison
+  const validPlanNames = (plans || []).map(p => (p.name || '').toLowerCase());
 
   // Generate chart colors dynamically based on plan name
   const getPlanChartColor = (planName, index) => {
@@ -192,11 +226,33 @@ function OverviewTab({ stats, loading, plans }) {
     return colors[hash % colors.length];
   };
 
-  const orgsByPlanData = Object.entries(stats?.organizationsByPlan || {}).map(([plan, count], index) => ({
-    name: planNameToDisplay(plan),
-    value: count,
-    color: getPlanChartColor(plan, index),
-  }));
+  // Prepare chart data and merge plans with same display names
+  const planDataMap = {};
+  Object.entries(stats?.organizationsByPlan || {}).forEach(([plan, count]) => {
+    const displayName = planNameToDisplay(plan);
+    if (planDataMap[displayName]) {
+      planDataMap[displayName] += count;
+    } else {
+      planDataMap[displayName] = count;
+    }
+  });
+
+  const orgsByPlanData = Object.entries(planDataMap)
+    .sort((a, b) => b[1] - a[1]) // Sort by count descending
+    .map(([name, count], index) => ({
+      name,
+      value: count,
+      color: getPlanChartColor(name, index),
+    }));
+
+  // Prepare chart data - exclude platform_admin from role chart
+  const usersByRoleData = Object.entries(stats?.usersByRole || {})
+    .filter(([role]) => role !== 'platform_admin') // Exclude platform_admin
+    .map(([role, count], index) => ({
+      name: ROLE_DISPLAY_NAMES[role] || role.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+      value: count,
+      color: ROLE_CHART_COLORS[index % ROLE_CHART_COLORS.length],
+    }));
 
   // Summary stats for mini cards
   const totalUsers = stats?.totalUsers || 0;

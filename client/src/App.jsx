@@ -71,7 +71,8 @@ function ProtectedRoute({ children }) {
   // Redirect to onboarding if user has no organization (unless already on onboarding page)
   // Platform admins don't need an organization
   if (user?.role !== 'platform_admin' && !user?.currentOrganization && location.pathname !== '/onboarding') {
-    return <Navigate to="/onboarding" replace />;
+    // Preserve any state that was passed (like selected plan)
+    return <Navigate to="/onboarding" replace state={location.state} />;
   }
 
   return children;

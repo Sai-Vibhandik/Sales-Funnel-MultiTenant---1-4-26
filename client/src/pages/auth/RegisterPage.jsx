@@ -74,6 +74,7 @@ export default function RegisterPage() {
   const onSubmit = async (data) => {
     try {
       setLoading(true);
+
       await registerUser({
         name: data.name,
         email: data.email,
@@ -81,15 +82,24 @@ export default function RegisterPage() {
         role: 'admin',
       });
       toast.success('Account created successfully! Now set up your organization.');
+
+      const planData = selectedPlan ? {
+        id: selectedPlan._id,
+        _id: selectedPlan._id,
+        name: selectedPlan.displayName || selectedPlan.name,
+        price: billingCycle === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice,
+        billingCycle: billingCycle,
+      } : null;
+
+      // Store selected plan in sessionStorage to survive redirects
+      if (planData) {
+        sessionStorage.setItem('selectedPlan', JSON.stringify(planData));
+      }
+
       // Pass selected plan to onboarding
       navigate('/onboarding', {
         state: {
-          selectedPlan: selectedPlan ? {
-            id: selectedPlan._id,
-            name: selectedPlan.displayName || selectedPlan.name,
-            price: billingCycle === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice,
-            billingCycle: billingCycle,
-          } : null
+          selectedPlan: planData
         }
       });
     } catch (error) {

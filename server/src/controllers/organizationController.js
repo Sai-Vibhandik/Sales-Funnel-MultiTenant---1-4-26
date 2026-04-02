@@ -34,8 +34,6 @@ exports.createOrganization = async (req, res) => {
     const { name, description, planId, planName } = req.body;
     const userId = req.user._id;
 
-    console.log('Creating organization with:', { planId, planName, name });
-
     // Look up the plan by ID to get limits and features
     let plan = null;
     let actualPlanName = planName || 'Free';
@@ -43,7 +41,6 @@ exports.createOrganization = async (req, res) => {
     if (planId) {
       try {
         plan = await Plan.findById(planId);
-        console.log('Found plan:', plan ? { id: plan._id, name: plan.name, displayName: plan.displayName } : 'Not found');
         if (plan) {
           // Use displayName if available, otherwise use name
           actualPlanName = plan.displayName || plan.name;
@@ -52,8 +49,6 @@ exports.createOrganization = async (req, res) => {
         console.error('Plan lookup error:', err);
       }
     }
-
-    console.log('Using plan name:', actualPlanName);
 
     // Get plan limits and features from the plan document or use defaults
     let planLimits = {};
@@ -109,13 +104,6 @@ exports.createOrganization = async (req, res) => {
     });
 
     await organization.save({ session });
-
-    console.log('Organization saved:', {
-      id: organization._id,
-      name: organization.name,
-      plan: organization.plan,
-      planName: organization.planName
-    });
 
     const org = organization;
 

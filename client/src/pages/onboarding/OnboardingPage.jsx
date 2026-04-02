@@ -44,6 +44,20 @@ export default function OnboardingPage() {
       return;
     }
 
+    // Check sessionStorage for plan data (survives redirects)
+    const storedPlan = sessionStorage.getItem('selectedPlan');
+    if (storedPlan) {
+      try {
+        const planData = JSON.parse(storedPlan);
+        setSelectedPlan(planData);
+        sessionStorage.removeItem('selectedPlan'); // Clean up
+        setPlanLoading(false);
+        return;
+      } catch (e) {
+        console.error('Failed to parse stored plan:', e);
+      }
+    }
+
     // Check if plan is passed via URL params (for authenticated users without org)
     const planIdFromUrl = searchParams.get('plan');
     const cycleFromUrl = searchParams.get('cycle');
@@ -58,7 +72,8 @@ export default function OnboardingPage() {
             const plan = data.data;
             setSelectedPlan({
               id: plan._id,
-              name: plan.name,
+              _id: plan._id,
+              name: plan.displayName || plan.name,
               price: cycleFromUrl === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice,
               billingCycle: cycleFromUrl || 'monthly',
             });
@@ -78,12 +93,11 @@ export default function OnboardingPage() {
   const handleCreateOrganization = async (data) => {
     setLoading(true);
     try {
-      console.log('Creating organization with plan:', selectedPlan);
       const response = await organizationService.createOrganization({
         name: data.name,
         description: data.description,
-        planId: selectedPlan?.id || selectedPlan?._id,
-        planName: selectedPlan?.name || 'Free Plan',
+        planId: selectedPlan?.id || selectedPlan?._id || null,
+        planName: selectedPlan?.name || 'Free',
       });
 
       if (response && response.success) {
@@ -98,8 +112,6 @@ export default function OnboardingPage() {
       }
     } catch (error) {
       console.error('Organization creation error:', error);
-      // The api interceptor returns error.response?.data or { message }
-      // So error is either { success: false, message: '...' } or { message: '...' }
       const errorMessage = error?.message || 'Failed to create organization';
       toast.error(errorMessage);
       setLoading(false);
