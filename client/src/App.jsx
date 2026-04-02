@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider, useAuth } from '@/context/AuthContext';
 import { SocketProvider } from '@/context/SocketContext';
@@ -54,6 +54,7 @@ import PlatformAdminDashboardPage from '@/pages/platform/PlatformAdminDashboardP
 // Protected Route wrapper - checks authentication AND organization
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading, user } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -64,11 +65,12 @@ function ProtectedRoute({ children }) {
   }
 
   if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
+    return <Navigate to="/login" replace state={{ from: location }} />;
   }
 
   // Redirect to onboarding if user has no organization (unless already on onboarding page)
-  if (!user?.currentOrganization && window.location.pathname !== '/onboarding') {
+  // Platform admins don't need an organization
+  if (user?.role !== 'platform_admin' && !user?.currentOrganization && location.pathname !== '/onboarding') {
     return <Navigate to="/onboarding" replace />;
   }
 

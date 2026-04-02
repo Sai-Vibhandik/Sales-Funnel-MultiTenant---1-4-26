@@ -9,7 +9,11 @@
       "Bash(node:*)",
       "Bash(cp:*)",
       "Bash(curl:*)",
-      "Bash(npm uninstall:*)"
+      "Bash(npm uninstall:*)",
+      "Bash(netstat:*)",
+      "Bash(taskkill:*)",
+      "Bash(powershell:*)",
+      "Bash(npm run:*)"
     ]
   }
 }

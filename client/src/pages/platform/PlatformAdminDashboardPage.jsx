@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useLocation } from 'react-router-dom';
 import { toast } from 'sonner';
 import { platformAdminService } from '@/services/platformAdmin';
 import { Card, CardBody, Spinner, Button, Badge } from '@/components/ui';
@@ -74,12 +74,24 @@ const ROLE_COLORS = {
   content_creator: 'bg-yellow-100 text-yellow-700',
 };
 
-// Plan colors
-const PLAN_COLORS = {
-  free: 'bg-gray-100 text-gray-700',
-  starter: 'bg-blue-100 text-blue-700',
-  pro: 'bg-purple-100 text-purple-700',
-  enterprise: 'bg-amber-100 text-amber-700',
+// Plan colors - based on plan name keywords
+const PLAN_COLOR_KEYWORDS = [
+  { keyword: 'free', color: 'bg-gray-100 text-gray-700' },
+  { keyword: 'starter', color: 'bg-blue-100 text-blue-700' },
+  { keyword: 'basic', color: 'bg-slate-100 text-slate-700' },
+  { keyword: 'pro', color: 'bg-purple-100 text-purple-700' },
+  { keyword: 'growth', color: 'bg-green-100 text-green-700' },
+  { keyword: 'scale', color: 'bg-cyan-100 text-cyan-700' },
+  { keyword: 'enterprise', color: 'bg-amber-100 text-amber-700' },
+  { keyword: 'premium', color: 'bg-indigo-100 text-indigo-700' },
+];
+
+// Get plan color with fallback based on plan name
+const getPlanColor = (planName) => {
+  if (!planName) return 'bg-gray-100 text-gray-700';
+  const lowerName = planName.toLowerCase();
+  const match = PLAN_COLOR_KEYWORDS.find(p => lowerName.includes(p.keyword));
+  return match ? match.color : 'bg-gray-100 text-gray-700';
 };
 
 // Chart colors
@@ -100,13 +112,6 @@ const ROLE_CHART_COLORS = [
   '#8B5CF6', '#EF4444', '#3B82F6', '#10B981', '#EC4899',
   '#06B6D4', '#F59E0B', '#14B8A6', '#6366F1', '#F97316'
 ];
-
-const PLAN_CHART_COLORS = {
-  free: '#6B7280',
-  starter: '#3B82F6',
-  pro: '#8B5CF6',
-  enterprise: '#F59E0B',
-};
 
 // Custom Tooltip for charts
 const CustomTooltip = ({ active, payload }) => {
@@ -172,16 +177,25 @@ function OverviewTab({ stats, loading, plans }) {
       color: ROLE_CHART_COLORS[index % ROLE_CHART_COLORS.length],
     }));
 
-  // Map plan tier to actual plan name from plans data
-  const planTierToName = (tier) => {
-    const plan = plans?.find(p => p.tier === tier);
-    return plan?.name || tier.charAt(0).toUpperCase() + tier.slice(1);
+  // Map plan name to display name (plan field now stores plan name directly)
+  const planNameToDisplay = (planName) => {
+    return planName || 'Free';
   };
 
-  const orgsByPlanData = Object.entries(stats?.organizationsByPlan || {}).map(([plan, count]) => ({
-    name: planTierToName(plan),
+  // Generate chart colors dynamically based on plan name
+  const getPlanChartColor = (planName, index) => {
+    const colors = ['#6B7280', '#3B82F6', '#8B5CF6', '#F59E0B', '#10B981', '#06B6D4', '#6366F1', '#EC4899'];
+    if (!planName) return colors[0];
+    // Use index if provided, otherwise hash the plan name
+    if (index !== undefined) return colors[index % colors.length];
+    const hash = planName.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[hash % colors.length];
+  };
+
+  const orgsByPlanData = Object.entries(stats?.organizationsByPlan || {}).map(([plan, count], index) => ({
+    name: planNameToDisplay(plan),
     value: count,
-    color: PLAN_CHART_COLORS[plan] || '#6B7280',
+    color: getPlanChartColor(plan, index),
   }));
 
   // Summary stats for mini cards
@@ -412,6 +426,26 @@ function OrganizationsTab() {
   const [selectedOrg, setSelectedOrg] = useState(null);
   const [suspendModal, setSuspendModal] = useState(null);
   const [suspendReason, setSuspendReason] = useState('');
+  const [plans, setPlans] = useState([]);
+
+  // Fetch plans for filter
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await platformAdminService.getPlans();
+        setPlans(response.data || []);
+      } catch (error) {
+        console.error('Failed to load plans:', error);
+      }
+    };
+    fetchPlans();
+  }, []);
+
+  // Helper to get plan name - use planName or plan field
+  const getPlanName = (org) => {
+    // planName is the preferred field, plan might have older values
+    return org?.planName || org?.plan || 'Free';
+  };
 
   const fetchOrganizations = async () => {
     try {
@@ -469,10 +503,11 @@ function OrganizationsTab() {
           className="px-4 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500"
         >
           <option value="">All Plans</option>
-          <option value="free">Free</option>
-          <option value="starter">Starter</option>
-          <option value="pro">Pro</option>
-          <option value="enterprise">Enterprise</option>
+          {plans.map((plan) => (
+            <option key={plan._id} value={plan.name}>
+              {plan.name}
+            </option>
+          ))}
         </select>
         <Button variant="outline" onClick={fetchOrganizations}>
           <RefreshCw size={16} className="mr-2" />
@@ -511,8 +546,8 @@ function OrganizationsTab() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4">
-                    <Badge className={PLAN_COLORS[org.plan] || 'bg-gray-100 text-gray-700'}>
-                      {org.plan?.charAt(0).toUpperCase() + org.plan?.slice(1) || 'Free'}
+                    <Badge className={getPlanColor(org?.plan)}>
+                      {getPlanName(org)}
                     </Badge>
                     <div className="text-right text-sm">
                       <p className="text-gray-500">Created</p>
@@ -594,8 +629,8 @@ function OrganizationsTab() {
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <p className="text-sm text-gray-500">Plan</p>
-                    <Badge className={PLAN_COLORS[selectedOrg.plan]}>
-                      {selectedOrg.plan?.charAt(0).toUpperCase() + selectedOrg.plan?.slice(1)}
+                    <Badge className={getPlanColor(selectedOrg?.plan)}>
+                      {getPlanName(selectedOrg)}
                     </Badge>
                   </div>
                   <div>
@@ -633,6 +668,25 @@ function UsersTab() {
   const [expandedOrgs, setExpandedOrgs] = useState({});
   const [roleModal, setRoleModal] = useState(null);
   const [selectedRole, setSelectedRole] = useState('');
+  const [plans, setPlans] = useState([]);
+
+  // Helper to get plan name - use planName or plan field
+  const getPlanName = (org) => {
+    return org?.planName || org?.plan || 'Free';
+  };
+
+  // Fetch plans
+  useEffect(() => {
+    const fetchPlans = async () => {
+      try {
+        const response = await platformAdminService.getPlans();
+        setPlans(response.data || []);
+      } catch (error) {
+        console.error('Failed to load plans:', error);
+      }
+    };
+    fetchPlans();
+  }, []);
 
   const fetchUsers = async () => {
     try {
@@ -838,8 +892,8 @@ function UsersTab() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Badge className={PLAN_COLORS[group.organization.plan] || 'bg-gray-100 text-gray-700'}>
-                    {group.organization.plan?.charAt(0).toUpperCase() + group.organization.plan?.slice(1) || 'Free'}
+                  <Badge className={getPlanColor(group.organization?.plan)}>
+                    {getPlanName(group.organization)}
                   </Badge>
                   <ChevronRight
                     size={20}
@@ -1010,7 +1064,6 @@ function PlansTab() {
       setEditModal('new');
       setFormData({
         name: '',
-        tier: 'starter',
         monthlyPrice: 0,
         yearlyPrice: 0,
         limits: { maxUsers: 1, maxProjects: 1 },
@@ -2130,19 +2183,30 @@ function LogsTab() {
 
 // Main Component
 export default function PlatformAdminDashboardPage() {
+  const location = useLocation();
   const [searchParams, setSearchParams] = useSearchParams();
+
+  // Get current tab from URL - recalculate on every render
   const tabFromUrl = searchParams.get('tab');
-  const [activeTab, setActiveTab] = useState(tabFromUrl || 'overview');
+
+  const [activeTab, setActiveTab] = useState(() => {
+    // Initialize from URL on first render
+    return tabFromUrl && TABS.some(t => t.id === tabFromUrl) ? tabFromUrl : 'overview';
+  });
   const [stats, setStats] = useState({});
   const [statsLoading, setStatsLoading] = useState(true);
   const [plans, setPlans] = useState([]);
 
   // Update activeTab when URL changes
   useEffect(() => {
-    if (tabFromUrl && TABS.some(t => t.id === tabFromUrl)) {
+    const validTab = tabFromUrl && TABS.some(t => t.id === tabFromUrl);
+    if (validTab) {
       setActiveTab(tabFromUrl);
+    } else if (!tabFromUrl) {
+      // If no tab in URL, default to overview
+      setActiveTab('overview');
     }
-  }, [tabFromUrl]);
+  }, [location.search]); // Re-run when URL search params change
 
   useEffect(() => {
     if (activeTab === 'overview') {

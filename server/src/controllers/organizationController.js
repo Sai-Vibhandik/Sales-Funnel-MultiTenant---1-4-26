@@ -31,12 +31,55 @@ exports.createOrganization = async (req, res) => {
   session.startTransaction();
 
   try {
-    const { name, description, plan = 'free' } = req.body;
+    const { name, description, planId, planName } = req.body;
     const userId = req.user._id;
 
-    // Get plan limits
-    const planLimits = getPlanLimits(plan);
-    const planFeatures = getPlanFeatures(plan);
+    console.log('Creating organization with:', { planId, planName, name });
+
+    // Look up the plan by ID to get limits and features
+    let plan = null;
+    let actualPlanName = planName || 'Free';
+
+    if (planId) {
+      try {
+        plan = await Plan.findById(planId);
+        console.log('Found plan:', plan ? { id: plan._id, name: plan.name, displayName: plan.displayName } : 'Not found');
+        if (plan) {
+          // Use displayName if available, otherwise use name
+          actualPlanName = plan.displayName || plan.name;
+        }
+      } catch (err) {
+        console.error('Plan lookup error:', err);
+      }
+    }
+
+    console.log('Using plan name:', actualPlanName);
+
+    // Get plan limits and features from the plan document or use defaults
+    let planLimits = {};
+    let planFeatures = {};
+
+    if (plan) {
+      planLimits = plan.limits || {};
+      planFeatures = plan.features || {};
+    } else {
+      // Default limits for free plan
+      planLimits = {
+        maxUsers: 3,
+        maxProjects: 3,
+        maxLandingPages: 5,
+        maxLandingPagesPerProject: 5,
+        storageLimitMB: 1024,
+        aiCallsPerMonth: 50,
+        customDomains: 0
+      };
+      planFeatures = {
+        analytics: false,
+        whiteLabel: false,
+        prioritySupport: false,
+        customDomain: false
+      };
+    }
 
     // Generate unique slug with timestamp + nanoseconds to guarantee uniqueness
     const baseSlug = name
@@ -57,8 +100,8 @@ exports.createOrganization = async (req, res) => {
       name,
       slug,
       description,
-      plan,
-      planName: plan.charAt(0).toUpperCase() + plan.slice(1) + ' Plan',
+      plan: actualPlanName, // Store plan name instead of tier
+      planName: actualPlanName,
       planLimits,
       features: planFeatures,
       owner: userId,
@@ -66,6 +109,13 @@ exports.createOrganization = async (req, res) => {
     });
 
     await organization.save({ session });
+
+    console.log('Organization saved:', {
+      id: organization._id,
+      name: organization.name,
+      plan: organization.plan,
+      planName: organization.planName
+    });
 
     const org = organization;
 
@@ -82,13 +132,13 @@ exports.createOrganization = async (req, res) => {
     await Subscription.create([{
       organizationId: org._id,
       provider: 'none',
-      plan,
+      plan: actualPlanName,
       planName: org.planName,
       planLimits,
       features: planFeatures,
       amount: 0,
       currency: 'USD',
-      status: plan === 'free' ? 'active' : 'incomplete'
+      status: 'active' // All plans start as active for now
     }], { session });
 
     // Set user as admin (first user to create org becomes admin)

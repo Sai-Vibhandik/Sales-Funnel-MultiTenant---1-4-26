@@ -109,8 +109,9 @@ router.get('/organizations', async (req, res) => {
       ];
     }
 
+    // Filter by plan name (exact match)
     if (plan) {
-      query.plan = plan;
+      query.planName = plan;
     }
 
     if (status === 'active') {

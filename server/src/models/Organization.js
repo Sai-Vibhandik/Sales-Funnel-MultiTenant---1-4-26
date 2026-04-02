@@ -27,8 +27,7 @@ const organizationSchema = new mongoose.Schema({
   // Plan & Billing (Dynamic - set by admin)
   plan: {
     type: String,
-    enum: ['free', 'starter', 'pro', 'enterprise'],
-    default: 'free'
+    default: 'Free'
   },
   planName: {
     type: String,

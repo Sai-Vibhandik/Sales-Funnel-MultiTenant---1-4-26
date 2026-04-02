@@ -89,6 +89,12 @@ const setTenantContext = async (req, res, next) => {
 
     // If still no organization, check if user needs to create one
     if (!organizationId) {
+      // Platform admins don't need an organization
+      if (req.user.role === 'platform_admin') {
+        // Continue without organization context for platform admin
+        return next();
+      }
+
       // Check if this is an organization creation route
       const allowedRoutes = [
         '/api/organizations',
@@ -137,8 +143,14 @@ const setTenantContext = async (req, res, next) => {
 /**
  * Require organization context
  * Ensures the request has a valid organization context
+ * Platform admins can bypass this check
  */
 const requireOrganization = (req, res, next) => {
+  // Platform admins don't need an organization
+  if (req.user?.role === 'platform_admin') {
+    return next();
+  }
+
   if (!req.organizationId) {
     return res.status(403).json({
       success: false,

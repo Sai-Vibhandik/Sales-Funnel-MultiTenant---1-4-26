@@ -42,7 +42,7 @@ export default function RegisterPage() {
           const activePlans = data.data.filter(p => p.isActive && p.isPublic);
           setPlans(activePlans);
 
-          // If plan ID is in URL, select it
+          // If plan ID is in URL, auto-select it
           if (planIdFromUrl) {
             const plan = activePlans.find(p => p._id === planIdFromUrl);
             if (plan) {
@@ -86,8 +86,7 @@ export default function RegisterPage() {
         state: {
           selectedPlan: selectedPlan ? {
             id: selectedPlan._id,
-            tier: selectedPlan.tier,
-            name: selectedPlan.name,
+            name: selectedPlan.displayName || selectedPlan.name,
             price: billingCycle === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice,
             billingCycle: billingCycle,
           } : null
@@ -123,6 +122,15 @@ export default function RegisterPage() {
     return features.slice(0, 5);
   };
 
+  // Show loading spinner while fetching plans
+  if (plansLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Spinner size="lg" />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-4xl mx-auto">
@@ -143,165 +151,246 @@ export default function RegisterPage() {
           <p className="mt-2 text-gray-600">Join Growth Valley and get your dedicated marketing team</p>
         </div>
 
-        {/* Selected Plan Summary */}
-        {selectedPlan && (
-          <Card className="mb-6">
-            <CardBody className="p-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-semibold text-gray-900">Selected Plan: {selectedPlan.name}</h3>
-                  <p className="text-sm text-gray-500">
-                    ₹{billingCycle === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice} / {billingCycle === 'monthly' ? 'month' : 'year'}
-                  </p>
-                </div>
-                <button
-                  onClick={() => setSelectedPlan(null)}
-                  className="text-primary-600 hover:text-primary-700 text-sm font-medium"
-                >
-                  Change Plan
-                </button>
-              </div>
-            </CardBody>
-          </Card>
-        )}
-
-        {/* Plan Selection (if no plan selected) */}
-        {!selectedPlan && !plansLoading && (
-          <div className="mb-8">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Plan</h2>
-
-            {/* Billing Toggle */}
-            <div className="flex items-center justify-center mb-6">
-              <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}>
-                Monthly
-              </span>
-              <button
-                onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-                className="mx-4 relative w-14 h-7 bg-gray-300 rounded-full transition-colors hover:bg-gray-400"
-              >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                    billingCycle === 'yearly' ? 'translate-x-7' : ''
-                  }`}
-                />
-              </button>
-              <span className={`text-sm font-medium ${billingCycle === 'yearly' ? 'text-gray-900' : 'text-gray-500'}`}>
-                Yearly <span className="text-green-600 font-semibold">Save 17%</span>
-              </span>
-            </div>
-
-            {/* Plans Grid */}
-            <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-              {plans.map((plan) => {
-                const price = billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-                const isPopular = plan.tier === 'pro' || plan.tier === 'enterprise';
-
-                return (
-                  <div
-                    key={plan._id}
-                    onClick={() => setSelectedPlan(plan)}
-                    className={`relative bg-white rounded-xl p-4 cursor-pointer border-2 transition-all ${
-                      isPopular ? 'border-primary-600 ring-2 ring-primary-600/20' : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    {isPopular && (
-                      <span className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full">
-                        Popular
-                      </span>
-                    )}
-                    <h3 className="font-semibold text-gray-900">{plan.name}</h3>
-                    <div className="mt-2">
-                      <span className="text-2xl font-bold text-gray-900">₹{price}</span>
-                      <span className="text-gray-500 text-sm">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
-                    </div>
-                    <div className="mt-3 space-y-1">
-                      {getPlanFeatures(plan).map((feature, idx) => (
-                        <div key={idx} className="flex items-center text-xs text-gray-600">
-                          <Check className="w-3 h-3 text-green-500 mr-1" />
-                          {feature}
-                        </div>
-                      ))}
-                    </div>
+        {/* If plan selected from landing page, show summary and form directly */}
+        {planIdFromUrl && selectedPlan ? (
+          <>
+            {/* Selected Plan Summary */}
+            <Card className="mb-6">
+              <CardBody className="p-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <h3 className="font-semibold text-gray-900">Selected Plan: {selectedPlan.displayName || selectedPlan.name}</h3>
+                    <p className="text-sm text-gray-500">
+                      ₹{billingCycle === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice} / {billingCycle === 'monthly' ? 'month' : 'year'}
+                    </p>
                   </div>
-                );
-              })}
-            </div>
+                  <Link
+                    to="/"
+                    className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                  >
+                    Change Plan
+                  </Link>
+                </div>
+              </CardBody>
+            </Card>
 
-            <p className="text-center text-sm text-gray-500 mt-4">
-              Already have an account?{' '}
-              <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
-                Sign in
-              </Link>
-            </p>
-          </div>
-        )}
+            {/* Registration Form */}
+            <Card>
+              <CardBody className="p-8">
+                <h2 className="text-xl font-semibold text-gray-900 mb-6">Create your account</h2>
 
-        {/* Registration Form (show after plan selection) */}
-        {selectedPlan && (
-          <Card>
-            <CardBody className="p-8">
-              <h2 className="text-xl font-semibold text-gray-900 mb-6">Create your account</h2>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <Input
+                    label="Full Name"
+                    type="text"
+                    placeholder="John Doe"
+                    error={errors.name?.message}
+                    {...register('name')}
+                  />
 
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                <Input
-                  label="Full Name"
-                  type="text"
-                  placeholder="John Doe"
-                  error={errors.name?.message}
-                  {...register('name')}
-                />
+                  <Input
+                    label="Email"
+                    type="email"
+                    placeholder="you@example.com"
+                    error={errors.email?.message}
+                    {...register('email')}
+                  />
 
-                <Input
-                  label="Email"
-                  type="email"
-                  placeholder="you@example.com"
-                  error={errors.email?.message}
-                  {...register('email')}
-                />
+                  <Input
+                    label="Password"
+                    type="password"
+                    placeholder="••••••••"
+                    error={errors.password?.message}
+                    {...register('password')}
+                  />
 
-                <Input
-                  label="Password"
-                  type="password"
-                  placeholder="••••••••"
-                  error={errors.password?.message}
-                  {...register('password')}
-                />
+                  <Input
+                    label="Confirm Password"
+                    type="password"
+                    placeholder="••••••••"
+                    error={errors.confirmPassword?.message}
+                    {...register('confirmPassword')}
+                  />
 
-                <Input
-                  label="Confirm Password"
-                  type="password"
-                  placeholder="••••••••"
-                  error={errors.confirmPassword?.message}
-                  {...register('confirmPassword')}
-                />
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    loading={loading}
+                  >
+                    Create Account
+                  </Button>
+                </form>
 
-                <Button
-                  type="submit"
-                  className="w-full"
-                  loading={loading}
-                >
-                  Create Account
-                </Button>
-              </form>
+                <p className="mt-6 text-center text-sm text-gray-600">
+                  Already have an account?{' '}
+                  <Link
+                    to="/login"
+                    className="text-primary-600 hover:text-primary-700 font-medium"
+                  >
+                    Sign in
+                  </Link>
+                </p>
+              </CardBody>
+            </Card>
+          </>
+        ) : (
+          /* No plan from URL - show plan selection first */
+          <>
+            {/* Selected Plan Summary */}
+            {selectedPlan && (
+              <Card className="mb-6">
+                <CardBody className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <h3 className="font-semibold text-gray-900">Selected Plan: {selectedPlan.displayName || selectedPlan.name}</h3>
+                      <p className="text-sm text-gray-500">
+                        ₹{billingCycle === 'monthly' ? selectedPlan.monthlyPrice : selectedPlan.yearlyPrice} / {billingCycle === 'monthly' ? 'month' : 'year'}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setSelectedPlan(null)}
+                      className="text-primary-600 hover:text-primary-700 text-sm font-medium"
+                    >
+                      Change Plan
+                    </button>
+                  </div>
+                </CardBody>
+              </Card>
+            )}
 
-              <p className="mt-6 text-center text-sm text-gray-600">
-                Already have an account?{' '}
-                <Link
-                  to="/login"
-                  className="text-primary-600 hover:text-primary-700 font-medium"
-                >
-                  Sign in
-                </Link>
-              </p>
-            </CardBody>
-          </Card>
-        )}
+            {/* Plan Selection (if no plan selected) */}
+            {!selectedPlan && (
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold text-gray-900 mb-4">Choose Your Plan</h2>
 
-        {/* Loading state */}
-        {plansLoading && (
-          <div className="flex justify-center py-12">
-            <Spinner size="lg" />
-          </div>
+                {/* Billing Toggle */}
+                <div className="flex items-center justify-center mb-6">
+                  <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}>
+                    Monthly
+                  </span>
+                  <button
+                    onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
+                    className="mx-4 relative w-14 h-7 bg-gray-300 rounded-full transition-colors hover:bg-gray-400"
+                  >
+                    <span
+                      className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
+                        billingCycle === 'yearly' ? 'translate-x-7' : ''
+                      }`}
+                    />
+                  </button>
+                  <span className={`text-sm font-medium ${billingCycle === 'yearly' ? 'text-gray-900' : 'text-gray-500'}`}>
+                    Yearly <span className="text-green-600 font-semibold">Save 17%</span>
+                  </span>
+                </div>
+
+                {/* Plans Grid */}
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                  {plans.map((plan) => {
+                    const price = billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
+                    const isPopular = plan.badge?.text || plan.name?.toLowerCase().includes('pro') || plan.name?.toLowerCase().includes('enterprise');
+                    const planDisplayName = plan.displayName || plan.name;
+
+                    return (
+                      <div
+                        key={plan._id}
+                        onClick={() => setSelectedPlan(plan)}
+                        className={`relative bg-white rounded-xl p-4 cursor-pointer border-2 transition-all ${
+                          isPopular ? 'border-primary-600 ring-2 ring-primary-600/20' : 'border-gray-200 hover:border-gray-300'
+                        }`}
+                      >
+                        {isPopular && (
+                          <span className="absolute -top-2 left-1/2 transform -translate-x-1/2 bg-primary-600 text-white text-xs px-2 py-0.5 rounded-full">
+                            Popular
+                          </span>
+                        )}
+                        <h3 className="font-semibold text-gray-900">{planDisplayName}</h3>
+                        <div className="mt-2">
+                          <span className="text-2xl font-bold text-gray-900">₹{price}</span>
+                          <span className="text-gray-500 text-sm">/{billingCycle === 'monthly' ? 'mo' : 'yr'}</span>
+                        </div>
+                        <div className="mt-3 space-y-1">
+                          {getPlanFeatures(plan).map((feature, idx) => (
+                            <div key={idx} className="flex items-center text-xs text-gray-600">
+                              <Check className="w-3 h-3 text-green-500 mr-1" />
+                              {feature}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <p className="text-center text-sm text-gray-500 mt-4">
+                  Already have an account?{' '}
+                  <Link to="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+                    Sign in
+                  </Link>
+                </p>
+              </div>
+            )}
+
+            {/* Registration Form (show after plan selection) */}
+            {selectedPlan && (
+              <Card>
+                <CardBody className="p-8">
+                  <h2 className="text-xl font-semibold text-gray-900 mb-6">Create your account</h2>
+
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <Input
+                      label="Full Name"
+                      type="text"
+                      placeholder="John Doe"
+                      error={errors.name?.message}
+                      {...register('name')}
+                    />
+
+                    <Input
+                      label="Email"
+                      type="email"
+                      placeholder="you@example.com"
+                      error={errors.email?.message}
+                      {...register('email')}
+                    />
+
+                    <Input
+                      label="Password"
+                      type="password"
+                      placeholder="••••••••"
+                      error={errors.password?.message}
+                      {...register('password')}
+                    />
+
+                    <Input
+                      label="Confirm Password"
+                      type="password"
+                      placeholder="••••••••"
+                      error={errors.confirmPassword?.message}
+                      {...register('confirmPassword')}
+                    />
+
+                    <Button
+                      type="submit"
+                      className="w-full"
+                      loading={loading}
+                    >
+                      Create Account
+                    </Button>
+                  </form>
+
+                  <p className="mt-6 text-center text-sm text-gray-600">
+                    Already have an account?{' '}
+                    <Link
+                      to="/login"
+                      className="text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      Sign in
+                    </Link>
+                  </p>
+                </CardBody>
+              </Card>
+            )}
+          </>
         )}
       </div>
     </div>

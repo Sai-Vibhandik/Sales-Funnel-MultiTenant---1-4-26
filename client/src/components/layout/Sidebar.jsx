@@ -125,6 +125,9 @@ export default function ({ collapsed, setCollapsed }) {
   const role = user?.role || 'graphic_designer';
   const navigation = navigationByRole[role] || navigationByRole.graphic_designer;
 
+  // Determine home link based on role
+  const homeLink = role === 'platform_admin' ? '/platform-admin' : '/dashboard';
+
   // Helper to check if nav item is active
   const isNavItemActive = (item) => {
     const itemUrl = new URL(item.href, 'http://localhost');
@@ -158,7 +161,7 @@ export default function ({ collapsed, setCollapsed }) {
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-dark-200">
         {!collapsed && (
-          <Link to="/dashboard" className="flex items-center gap-3">
+          <Link to={homeLink} className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-dark-300 font-bold text-lg">G</span>
             </div>

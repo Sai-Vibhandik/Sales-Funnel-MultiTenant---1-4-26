@@ -27,11 +27,11 @@ const planSchema = new mongoose.Schema({
     maxlength: [500, 'Description cannot exceed 500 characters']
   },
 
-  // Plan Tier
+  // Plan Tier (optional - for internal categorization)
   tier: {
     type: String,
     enum: ['free', 'starter', 'pro', 'enterprise'],
-    required: true
+    default: 'starter'
   },
 
   // Pricing - Monthly

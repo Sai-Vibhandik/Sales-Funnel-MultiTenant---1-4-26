@@ -38,7 +38,6 @@ const subscriptionSchema = new mongoose.Schema({
   // Plan Information (copied from dynamic plans)
   plan: {
     type: String,
-    enum: ['free', 'starter', 'pro', 'enterprise'],
     required: true
   },
   planName: {

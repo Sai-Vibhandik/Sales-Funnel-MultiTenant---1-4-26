@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
 import {
@@ -28,13 +28,15 @@ export default function LandingPage() {
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
+  const hasRedirected = useRef(false);
 
   // Redirect authenticated users with organization to dashboard
   useEffect(() => {
-    if (isAuthenticated && !authLoading && user?.currentOrganization) {
+    if (!hasRedirected.current && isAuthenticated && !authLoading && user?.currentOrganization) {
+      hasRedirected.current = true;
       navigate('/dashboard', { replace: true });
     }
-  }, [isAuthenticated, authLoading, user, navigate]);
+  }, [isAuthenticated, authLoading, user?.currentOrganization, navigate]);
 
   // Fetch public plans
   useEffect(() => {
@@ -484,7 +486,9 @@ function StepCard({ number, title, description }) {
 
 function PricingCard({ plan, billingCycle, features, onSelect }) {
   const price = billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-  const isPopular = plan.tier === 'pro' || plan.tier === 'enterprise';
+  // Check if plan is popular by badge or name
+  const isPopular = plan.badge?.text || plan.name?.toLowerCase().includes('pro') || plan.name?.toLowerCase().includes('enterprise');
+  const planDisplayName = plan.displayName || plan.name;
 
   return (
     <div className={`relative bg-white rounded-2xl shadow-lg flex flex-col ${
@@ -501,7 +505,7 @@ function PricingCard({ plan, billingCycle, features, onSelect }) {
       <div className="p-6 flex-1">
         {/* Header */}
         <div className="text-center mb-4">
-          <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+          <h3 className="text-xl font-bold text-gray-900">{planDisplayName}</h3>
           {plan.description && (
             <p className="text-gray-500 mt-1 text-sm">{plan.description}</p>
           )}
