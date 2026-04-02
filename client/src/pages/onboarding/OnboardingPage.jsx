@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -102,10 +102,14 @@ const PLANS = [
 export default function OnboardingPage() {
   const [step, setStep] = useState(1);
   const [selectedPlan, setSelectedPlan] = useState('free');
+  const [preSelectedPlan, setPreSelectedPlan] = useState(null);
   const [loading, setLoading] = useState(false);
   const [plans, setPlans] = useState(PLANS);
+  const [plansLoading, setPlansLoading] = useState(true);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   const {
     register,
@@ -120,20 +124,66 @@ export default function OnboardingPage() {
   });
 
   useEffect(() => {
-    // Fetch plans from API if available
+    // Check if a plan was pre-selected from registration (via navigate state)
+    if (location.state?.selectedPlan) {
+      setPreSelectedPlan(location.state.selectedPlan);
+      setSelectedPlan(location.state.selectedPlan.tier || location.state.selectedPlan.id);
+      setStep(2); // Skip plan selection
+      setPlansLoading(false);
+      return;
+    }
+
+    // Check if plan is passed via URL params (for authenticated users without org)
+    const planIdFromUrl = searchParams.get('plan');
+    const cycleFromUrl = searchParams.get('cycle');
+
+    if (planIdFromUrl) {
+      // Fetch plan details from API
+      const fetchPlan = async () => {
+        try {
+          const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/plans/public/${planIdFromUrl}`);
+          const data = await response.json();
+          if (data.success && data.data) {
+            const plan = data.data;
+            setPreSelectedPlan({
+              id: plan._id,
+              tier: plan.tier,
+              name: plan.name,
+              price: cycleFromUrl === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice,
+              billingCycle: cycleFromUrl || 'monthly',
+            });
+            setSelectedPlan(plan.tier);
+            setStep(2); // Skip plan selection
+          }
+        } catch (error) {
+          console.error('Failed to fetch plan:', error);
+        } finally {
+          setPlansLoading(false);
+        }
+      };
+      fetchPlan();
+    } else {
+      setPlansLoading(false);
+    }
+  }, [location.state, searchParams]);
+
+  useEffect(() => {
+    // Fetch plans from public API
     const fetchPlans = async () => {
       try {
-        const response = await organizationService.getPlans();
-        if (response.success && response.data?.length > 0) {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000/api'}/plans/public`);
+        const data = await response.json();
+        if (data.success && data.data?.length > 0) {
           // Map API plans to our format
-          const apiPlans = response.data.map(plan => ({
+          const apiPlans = data.data.map(plan => ({
             id: plan.tier,
+            _id: plan._id,
             name: plan.name,
             price: plan.monthlyPrice,
             description: plan.description || '',
-            features: plan.featureList?.map(f => f.text) || [],
+            features: plan.featureList?.filter(f => f.included !== false).map(f => f.name + (f.limit ? ` (${f.limit === -1 ? 'Unlimited' : f.limit})` : '')) || [],
             limits: plan.limits,
-            highlighted: plan.badge?.text === 'Most Popular',
+            highlighted: plan.badge?.text === 'Most Popular' || plan.tier === 'pro',
           }));
           setPlans(apiPlans.length > 0 ? apiPlans : PLANS);
         }
@@ -208,7 +258,11 @@ export default function OnboardingPage() {
       </div>
 
       <div className="pt-20 pb-12 px-4">
-        {step === 1 && (
+        {plansLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+          </div>
+        ) : step === 1 ? (
           <div className="max-w-4xl mx-auto">
             <div className="text-center mb-8">
               <h1 className="text-3xl font-bold text-gray-900 mb-2">Choose Your Plan</h1>
@@ -238,7 +292,7 @@ export default function OnboardingPage() {
                     <h3 className="font-semibold text-gray-900">{plan.name}</h3>
                     <div className="mt-2">
                       <span className="text-3xl font-bold text-gray-900">
-                        {plan.price === 0 ? 'Free' : `$${plan.price}`}
+                        {plan.price === 0 ? 'Free' : `₹${plan.price}`}
                       </span>
                       {plan.price > 0 && (
                         <span className="text-gray-500 text-sm">/month</span>
@@ -285,9 +339,7 @@ export default function OnboardingPage() {
               </Button>
             </div>
           </div>
-        )}
-
-        {step === 2 && (
+        ) : (
           <div className="max-w-lg mx-auto">
             <Card>
               <CardBody className="p-8">
@@ -324,21 +376,25 @@ export default function OnboardingPage() {
                     <div className="flex items-center justify-between">
                       <div>
                         <p className="font-semibold text-primary-600">
-                          {plans.find(p => p.id === selectedPlan)?.name}
+                          {preSelectedPlan ? preSelectedPlan.name : plans.find(p => p.id === selectedPlan)?.name}
                         </p>
                         <p className="text-sm text-gray-500">
-                          {plans.find(p => p.id === selectedPlan)?.price === 0
-                            ? 'Free forever'
-                            : `$${plans.find(p => p.id === selectedPlan)?.price}/month`}
+                          {preSelectedPlan
+                            ? `₹${preSelectedPlan.price}/${preSelectedPlan.billingCycle === 'monthly' ? 'month' : 'year'}`
+                            : plans.find(p => p.id === selectedPlan)?.price === 0
+                              ? 'Free forever'
+                              : `₹${plans.find(p => p.id === selectedPlan)?.price}/month`}
                         </p>
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setStep(1)}
-                        className="text-sm text-primary-600 hover:text-primary-700"
-                      >
-                        Change plan
-                      </button>
+                      {!preSelectedPlan && (
+                        <button
+                          type="button"
+                          onClick={() => setStep(1)}
+                          className="text-sm text-primary-600 hover:text-primary-700"
+                        >
+                          Change plan
+                        </button>
+                      )}
                     </div>
                   </div>
 

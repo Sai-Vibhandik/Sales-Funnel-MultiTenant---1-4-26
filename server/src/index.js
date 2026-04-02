@@ -70,6 +70,7 @@ const { setTenantContext, requireOrganization } = require("./middleware/tenant")
 // Routes
 app.use("/api/auth", authRoutes);
 app.use("/api/invitations", require("./routes/invitations"));
+app.use("/api/plans", require("./routes/plans")); // Public plans route (for landing page)
 app.use("/api/organizations", protect, organizationRoutes);
 app.use("/api/projects", protect, setTenantContext, requireOrganization, projectRoutes);
 app.use("/api/market-research", protect, setTenantContext, requireOrganization, marketResearchRoutes);

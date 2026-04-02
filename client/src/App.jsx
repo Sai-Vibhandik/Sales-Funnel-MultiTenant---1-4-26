@@ -6,6 +6,9 @@ import { NotificationProvider } from '@/context/NotificationContext';
 import { ProjectProvider } from '@/context/ProjectContext';
 import { Layout } from '@/components/layout';
 
+// Landing page
+import { LandingPage } from '@/pages/landing';
+
 // Auth pages
 import { LoginPage, RegisterPage, ForgotPasswordPage, ResetPasswordPage } from '@/pages/auth';
 
@@ -89,7 +92,7 @@ function AdminRoute({ children }) {
   }
 
   if (user?.role !== 'admin' && user?.role !== 'platform_admin') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -112,7 +115,7 @@ function PlatformAdminRoute({ children }) {
   }
 
   if (user?.role !== 'platform_admin') {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -136,7 +139,7 @@ function TeamRoute({ children }) {
 
   // Admin cannot access strategy stages
   if (user?.role === 'admin') {
-    return <Navigate to="/projects" replace />;
+    return <Navigate to="/dashboard/projects" replace />;
   }
 
   return children;
@@ -160,7 +163,7 @@ function MarketerRoute({ children }) {
 
   // Only admin and performance_marketer can access
   if (user?.role !== 'admin' && user?.role !== 'performance_marketer') {
-    return <Navigate to="/projects" replace />;
+    return <Navigate to="/dashboard/projects" replace />;
   }
 
   return children;
@@ -179,7 +182,7 @@ function PublicRoute({ children }) {
   }
 
   if (isAuthenticated) {
-    return <Navigate to="/" replace />;
+    return <Navigate to="/dashboard" replace />;
   }
 
   return children;
@@ -188,6 +191,9 @@ function PublicRoute({ children }) {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Landing page - public, redirects to dashboard if authenticated */}
+      <Route path="/" element={<LandingPage />} />
+
       {/* Public routes */}
       <Route
         path="/login"
@@ -234,6 +240,7 @@ function AppRoutes() {
 
       {/* Protected routes */}
       <Route
+        path="/dashboard"
         element={
           <ProtectedRoute>
             <SocketProvider>
@@ -246,18 +253,18 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       >
-        {/* Dashboard */}
-        <Route path="/" element={<DashboardPage />} />
+        {/* Dashboard Home */}
+        <Route index element={<DashboardPage />} />
 
         {/* Projects */}
-        <Route path="/projects" element={<ProjectsListPage />} />
-        <Route path="/projects/:id" element={<ProjectDetailPage />} />
-        <Route path="/projects/:id/strategy-summary" element={<ProjectStrategySummaryPage />} />
-        <Route path="/projects/:id/assets" element={<ProjectAssetsPage />} />
+        <Route path="projects" element={<ProjectsListPage />} />
+        <Route path="projects/:id" element={<ProjectDetailPage />} />
+        <Route path="projects/:id/strategy-summary" element={<ProjectStrategySummaryPage />} />
+        <Route path="projects/:id/assets" element={<ProjectAssetsPage />} />
 
         {/* Create Project - Admin only */}
         <Route
-          path="/projects/new"
+          path="projects/new"
           element={
             <AdminRoute>
               <CreateProjectPage />
@@ -267,7 +274,7 @@ function AppRoutes() {
 
         {/* Team Assignment - Admin only */}
         <Route
-          path="/projects/:id/assign-team"
+          path="projects/:id/assign-team"
           element={
             <AdminRoute>
               <TeamAssignmentPage />
@@ -277,7 +284,7 @@ function AppRoutes() {
 
         {/* Stage routes - Market Research, Offer Engineering, Traffic Strategy - Performance Marketer and Admin */}
         <Route
-          path="/market-research"
+          path="market-research"
           element={
             <MarketerRoute>
               <MarketResearchPage />
@@ -285,7 +292,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/offer-engineering"
+          path="offer-engineering"
           element={
             <MarketerRoute>
               <OfferEngineeringPage />
@@ -293,7 +300,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/traffic-strategy"
+          path="traffic-strategy"
           element={
             <MarketerRoute>
               <TrafficStrategyPage />
@@ -302,7 +309,7 @@ function AppRoutes() {
         />
         {/* Landing Page and Creative Strategy - Admin can edit, Performance Marketer can view */}
         <Route
-          path="/landing-pages"
+          path="landing-pages"
           element={
             <MarketerRoute>
               <LandingPagesListPage />
@@ -310,7 +317,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/landing-page-strategy"
+          path="landing-page-strategy"
           element={
             <MarketerRoute>
               <LandingPageStrategyPage />
@@ -318,7 +325,7 @@ function AppRoutes() {
           }
         />
         <Route
-          path="/creative-strategy"
+          path="creative-strategy"
           element={
             <MarketerRoute>
               <CreativeStrategyPage />
@@ -328,25 +335,25 @@ function AppRoutes() {
 
         {/* Tasks - Not accessible to Performance Marketers and Admins */}
         <Route
-          path="/tasks"
+          path="tasks"
           element={
             <ProtectedRoute>
               {(() => {
                 const { user } = useAuth();
                 // Performance Marketers and Admins should not access "My Tasks"
                 if (user?.role === 'performance_marketer' || user?.role === 'admin') {
-                  return <Navigate to="/" replace />;
+                  return <Navigate to="/dashboard" replace />;
                 }
                 return <TasksPage />;
               })()}
             </ProtectedRoute>
           }
         />
-        <Route path="/tasks/:taskId" element={<TaskDetailPage />} />
+        <Route path="tasks/:taskId" element={<TaskDetailPage />} />
 
         {/* Tester Review - Tester/Admin only */}
         <Route
-          path="/tasks/review"
+          path="tasks/review"
           element={
             <ProtectedRoute>
               {(() => {
@@ -354,7 +361,7 @@ function AppRoutes() {
                 if (user?.role === 'tester' || user?.role === 'admin') {
                   return <TesterReviewPage />;
                 }
-                return <Navigate to="/tasks" replace />;
+                return <Navigate to="/dashboard/tasks" replace />;
               })()}
             </ProtectedRoute>
           }
@@ -362,7 +369,7 @@ function AppRoutes() {
 
         {/* Marketer Approval - Performance Marketer/Admin only */}
         <Route
-          path="/tasks/approval"
+          path="tasks/approval"
           element={
             <ProtectedRoute>
               {(() => {
@@ -370,7 +377,7 @@ function AppRoutes() {
                 if (user?.role === 'performance_marketer' || user?.role === 'admin') {
                   return <MarketerApprovalPage />;
                 }
-                return <Navigate to="/tasks" replace />;
+                return <Navigate to="/dashboard/tasks" replace />;
               })()}
             </ProtectedRoute>
           }
@@ -378,7 +385,7 @@ function AppRoutes() {
 
         {/* Approved Assets - Tester only */}
         <Route
-          path="/tasks/approved"
+          path="tasks/approved"
           element={
             <ProtectedRoute>
               {(() => {
@@ -386,7 +393,7 @@ function AppRoutes() {
                 if (user?.role === 'tester' || user?.role === 'admin') {
                   return <ApprovedAssetsPage />;
                 }
-                return <Navigate to="/tasks" replace />;
+                return <Navigate to="/dashboard/tasks" replace />;
               })()}
             </ProtectedRoute>
           }
@@ -394,7 +401,7 @@ function AppRoutes() {
 
         {/* Assets - Performance Marketer/Admin only */}
         <Route
-          path="/assets"
+          path="assets"
           element={
             <ProtectedRoute>
               {(() => {
@@ -402,7 +409,7 @@ function AppRoutes() {
                 if (user?.role === 'performance_marketer' || user?.role === 'admin') {
                   return <PerformanceMarketerAssetsPage />;
                 }
-                return <Navigate to="/" replace />;
+                return <Navigate to="/dashboard" replace />;
               })()}
             </ProtectedRoute>
           }
@@ -410,7 +417,7 @@ function AppRoutes() {
 
         {/* Project Assets Detail - Performance Marketer/Admin only */}
         <Route
-          path="/assets/project/:projectId"
+          path="assets/project/:projectId"
           element={
             <ProtectedRoute>
               {(() => {
@@ -418,7 +425,7 @@ function AppRoutes() {
                 if (user?.role === 'performance_marketer' || user?.role === 'admin') {
                   return <ProjectAssetsDetailPage />;
                 }
-                return <Navigate to="/" replace />;
+                return <Navigate to="/dashboard" replace />;
               })()}
             </ProtectedRoute>
           }
@@ -426,7 +433,7 @@ function AppRoutes() {
 
         {/* Team Management (Admin only) */}
         <Route
-          path="/team"
+          path="team"
           element={
             <AdminRoute>
               <TeamManagementPage />
@@ -436,7 +443,7 @@ function AppRoutes() {
 
         {/* Clients (Admin only) */}
         <Route
-          path="/clients"
+          path="clients"
           element={
             <AdminRoute>
               <ClientsPage />
@@ -446,7 +453,7 @@ function AppRoutes() {
 
         {/* SOP Library (Admin only) */}
         <Route
-          path="/sop-library"
+          path="sop-library"
           element={
             <AdminRoute>
               <SOPLibraryPage />
@@ -456,7 +463,7 @@ function AppRoutes() {
 
         {/* Prompts Management (Admin only) */}
         <Route
-          path="/prompts"
+          path="prompts"
           element={
             <AdminRoute>
               <PromptsPage />
@@ -466,7 +473,7 @@ function AppRoutes() {
 
         {/* Platform Admin Dashboard - Only for platform_admin role */}
         <Route
-          path="/platform-admin"
+          path="platform-admin"
           element={
             <PlatformAdminRoute>
               <PlatformAdminDashboardPage />
@@ -476,7 +483,7 @@ function AppRoutes() {
 
         {/* Reports (placeholder) */}
         <Route
-          path="/reports"
+          path="reports"
           element={
             <div className="text-center py-12">
               <h2 className="text-2xl font-bold text-gray-900">Reports</h2>
@@ -486,7 +493,7 @@ function AppRoutes() {
         />
       </Route>
 
-      {/* Catch all */}
+      {/* Catch all - redirect to landing page */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );

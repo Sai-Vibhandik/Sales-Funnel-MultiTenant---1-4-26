@@ -49,70 +49,70 @@ const navigationByRole = {
 
   // ADMIN
   admin: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Clients', href: '/clients', icon: Briefcase },
-    { name: 'Projects', href: '/projects', icon: FolderKanban },
-    { name: 'Team Management', href: '/team', icon: Users },
-    { name: 'Prompts', href: '/prompts', icon: PenTool },
-    { name: 'SOP Library', href: '/sop-library', icon: BookOpen },
-    // { name: 'Settings', href: '/settings', icon: Settings },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Clients', href: '/dashboard/clients', icon: Briefcase },
+    { name: 'Projects', href: '/dashboard/projects', icon: FolderKanban },
+    { name: 'Team Management', href: '/dashboard/team', icon: Users },
+    { name: 'Prompts', href: '/dashboard/prompts', icon: PenTool },
+    { name: 'SOP Library', href: '/dashboard/sop-library', icon: BookOpen },
+    // { name: 'Settings', href: '/dashboard/settings', icon: Settings },
   ],
 
-  // PERFORMANCE MARKETER 
+  // PERFORMANCE MARKETER
   performance_marketer: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Projects', href: '/projects', icon: FolderKanban },
-    { name: 'Creative Approvals', href: '/tasks/approval', icon: CheckCircle },
-    { name: 'Assets', href: '/assets', icon: FileCheck },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Projects', href: '/dashboard/projects', icon: FolderKanban },
+    { name: 'Creative Approvals', href: '/dashboard/tasks/approval', icon: CheckCircle },
+    { name: 'Assets', href: '/dashboard/assets', icon: FileCheck },
   ],
 
-  // Content Planner 
+  // Content Planner
   content_writer: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'My Projects', href: '/projects', icon: FolderKanban },
-    { name: 'My Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Projects', href: '/dashboard/projects', icon: FolderKanban },
+    { name: 'My Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   ],
 
   // CONTENT CREATOR  (legacy - kept for backward compatibility)
   content_creator: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'My Projects', href: '/projects', icon: FolderKanban },
-    { name: 'My Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Projects', href: '/dashboard/projects', icon: FolderKanban },
+    { name: 'My Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   ],
 
-  // GRAPHIC DESIGNER 
+  // GRAPHIC DESIGNER
   graphic_designer: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'My Projects', href: '/projects', icon: FolderKanban },
-    { name: 'My Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Projects', href: '/dashboard/projects', icon: FolderKanban },
+    { name: 'My Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   ],
 
-  // VIDEO EDITOR 
+  // VIDEO EDITOR
   video_editor: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'My Projects', href: '/projects', icon: FolderKanban },
-    { name: 'My Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Projects', href: '/dashboard/projects', icon: FolderKanban },
+    { name: 'My Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   ],
 
-  // UI/UX DESIGNER 
+  // UI/UX DESIGNER
   ui_ux_designer: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'My Projects', href: '/projects', icon: FolderKanban },
-    { name: 'My Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Projects', href: '/dashboard/projects', icon: FolderKanban },
+    { name: 'My Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   ],
 
-  // DEVELOPER 
+  // DEVELOPER
   developer: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'My Projects', href: '/projects', icon: FolderKanban },
-    { name: 'My Tasks', href: '/tasks', icon: CheckSquare },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'My Projects', href: '/dashboard/projects', icon: FolderKanban },
+    { name: 'My Tasks', href: '/dashboard/tasks', icon: CheckSquare },
   ],
 
-  // TESTER 
+  // TESTER
   tester: [
-    { name: 'Dashboard', href: '/', icon: LayoutDashboard },
-    { name: 'Assets Awaiting Review', href: '/tasks/review', icon: ClipboardCheck },
-    { name: 'Approved Assets', href: '/tasks/approved', icon: FileCheck },
+    { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
+    { name: 'Assets Awaiting Review', href: '/dashboard/tasks/review', icon: ClipboardCheck },
+    { name: 'Approved Assets', href: '/dashboard/tasks/approved', icon: FileCheck },
   ],
 };
 
@@ -131,17 +131,20 @@ export default function ({ collapsed, setCollapsed }) {
     const itemPath = itemUrl.pathname;
     const itemTab = itemUrl.searchParams.get('tab');
 
-    // Check if pathname matches
-    const pathMatches = location.pathname === itemPath ||
-      (itemPath !== '/' && location.pathname.startsWith(itemPath));
-
     // For platform admin pages, also check the tab param
     if (itemPath === '/platform-admin' && itemTab) {
       const currentTab = searchParams.get('tab');
-      return pathMatches && currentTab === itemTab;
+      return location.pathname === itemPath && currentTab === itemTab;
     }
 
-    return pathMatches;
+    // For dashboard routes
+    if (itemPath === '/dashboard') {
+      return location.pathname === '/dashboard';
+    }
+
+    // Check if pathname matches (for other routes)
+    return location.pathname === itemPath ||
+      (itemPath !== '/dashboard' && location.pathname.startsWith(itemPath));
   };
 
   return (
@@ -155,7 +158,7 @@ export default function ({ collapsed, setCollapsed }) {
       {/* Logo */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-dark-200">
         {!collapsed && (
-          <Link to="/" className="flex items-center gap-3">
+          <Link to="/dashboard" className="flex items-center gap-3">
             <div className="w-9 h-9 bg-gradient-to-br from-primary-500 to-primary-600 rounded-xl flex items-center justify-center shadow-lg">
               <span className="text-dark-300 font-bold text-lg">G</span>
             </div>
