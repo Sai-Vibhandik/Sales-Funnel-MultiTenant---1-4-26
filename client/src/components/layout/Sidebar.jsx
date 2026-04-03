@@ -39,12 +39,12 @@ const roleLabels = {
 const navigationByRole = {
   // PLATFORM ADMIN
   platform_admin: [
-    { name: 'Dashboard', href: '/platform-admin?tab=overview', icon: LayoutDashboard },
-    { name: 'Organizations', href: '/platform-admin?tab=organizations', icon: Briefcase },
-    { name: 'Users', href: '/platform-admin?tab=users', icon: Users },
-    { name: 'Plans', href: '/platform-admin?tab=plans', icon: CheckSquare },
-    { name: 'Prompts', href: '/platform-admin?tab=prompts', icon: PenTool },
-    { name: 'Activity Logs', href: '/platform-admin?tab=logs', icon: FileCheck },
+    { name: 'Dashboard', href: '/dashboard/platform-admin?tab=overview', icon: LayoutDashboard },
+    { name: 'Organizations', href: '/dashboard/platform-admin?tab=organizations', icon: Briefcase },
+    { name: 'Users', href: '/dashboard/platform-admin?tab=users', icon: Users },
+    { name: 'Plans', href: '/dashboard/platform-admin?tab=plans', icon: CheckSquare },
+    { name: 'Prompts', href: '/dashboard/platform-admin?tab=prompts', icon: PenTool },
+    { name: 'Activity Logs', href: '/dashboard/platform-admin?tab=logs', icon: FileCheck },
   ],
 
   // ADMIN

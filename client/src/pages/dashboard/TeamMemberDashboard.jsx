@@ -203,11 +203,11 @@ export default function TeamMemberDashboard({ user }) {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => navigate('/projects')}>
+          <Button variant="secondary" onClick={() => navigate('/dashboard/projects')}>
             <FolderKanban className="w-4 h-4 mr-2" />
             Projects
           </Button>
-          <Button onClick={() => navigate('/tasks')}>
+          <Button onClick={() => navigate('/dashboard/tasks')}>
             <Clock className="w-4 h-4 mr-2" />
             My Tasks
           </Button>
@@ -281,7 +281,7 @@ export default function TeamMemberDashboard({ user }) {
               <h2 className="text-lg font-semibold text-gray-900">
                 Pending Review ({pendingReview.length})
               </h2>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/tasks/review')}>
+              <Button variant="secondary" size="sm" onClick={() => navigate('/dashboard/tasks/review')}>
                 View All
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
@@ -296,7 +296,7 @@ export default function TeamMemberDashboard({ user }) {
                     </p>
                   </div>
                   <div className="flex gap-2">
-                    <Button size="sm" onClick={() => navigate('/tasks/review')}>
+                    <Button size="sm" onClick={() => navigate('/dashboard/tasks/review')}>
                       <Eye className="w-4 h-4 mr-1" />
                       Review
                     </Button>
@@ -316,7 +316,7 @@ export default function TeamMemberDashboard({ user }) {
               <h2 className="text-lg font-semibold text-gray-900">
                 {user?.role === 'content_writer' ? 'My Creative Assignments' : 'My Tasks'}
               </h2>
-              <Button variant="secondary" size="sm" onClick={() => navigate('/tasks')}>
+              <Button variant="secondary" size="sm" onClick={() => navigate('/dashboard/tasks')}>
                 View All Tasks
                 <ChevronRight className="w-4 h-4 ml-1" />
               </Button>
@@ -363,7 +363,7 @@ export default function TeamMemberDashboard({ user }) {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => navigate(`/creatives?projectId=${task.projectId?._id || task.projectId}`)}
+                          onClick={() => navigate(`/dashboard/creatives?projectId=${task.projectId?._id || task.projectId}`)}
                         >
                           <Eye className="w-4 h-4 mr-1" />
                           View Creative
@@ -372,7 +372,7 @@ export default function TeamMemberDashboard({ user }) {
                         <Button
                           variant="secondary"
                           size="sm"
-                          onClick={() => navigate(`/tasks/${task._id}`)}
+                          onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
                         >
                           View Task
                         </Button>
@@ -397,7 +397,7 @@ export default function TeamMemberDashboard({ user }) {
               <Card
                 key={project._id}
                 className="hover:shadow-md transition-shadow cursor-pointer"
-                onClick={() => navigate(`/projects/${project._id}`)}
+                onClick={() => navigate(`/dashboard/projects/${project._id}`)}
               >
                 <CardBody className="p-5">
                   <div className="flex items-start justify-between mb-3">
@@ -432,7 +432,7 @@ export default function TeamMemberDashboard({ user }) {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/projects/${project._id}`);
+                        navigate(`/dashboard/projects/${project._id}`);
                       }}
                     >
                       View <ChevronRight className="w-4 h-4 ml-1" />
@@ -454,7 +454,7 @@ export default function TeamMemberDashboard({ user }) {
               <p className="text-gray-600 mb-4">
                 You haven't been assigned any tasks yet. Tasks will appear here once they're created.
               </p>
-              <Button variant="secondary" onClick={() => navigate('/projects')}>
+              <Button variant="secondary" onClick={() => navigate('/dashboard/projects')}>
                 View Projects
               </Button>
             </div>

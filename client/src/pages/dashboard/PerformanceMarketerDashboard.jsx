@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import { projectService, taskService } from '@/services/api';
-import { Spinner, Badge, Button, EmptyState } from '@/components/ui';
+import { Spinner, Badge, Button, EmptyState, Textarea } from '@/components/ui';
 import {
   FolderKanban,
   Search,
@@ -65,11 +65,11 @@ const STAGE_NAMES = {
 };
 
 const STAGE_PATHS = {
-  marketResearch: '/market-research',
-  offerEngineering: '/offer-engineering',
-  trafficStrategy: '/traffic-strategy',
-  landingPage: '/landing-pages',
-  creativeStrategy: '/creative-strategy',
+  marketResearch: '/dashboard/market-research',
+  offerEngineering: '/dashboard/offer-engineering',
+  trafficStrategy: '/dashboard/traffic-strategy',
+  landingPage: '/dashboard/landing-pages',
+  creativeStrategy: '/dashboard/creative-strategy',
 };
 
 const COLORS = {
@@ -169,7 +169,7 @@ function PendingApprovalCard({ task, onApprove, onReject }) {
         <Button
           size="sm"
           variant="danger"
-          onClick={() => onReject(task._id)}
+          onClick={onReject}
           className="flex-1"
         >
           <XCircle size={14} className="mr-1" />
@@ -190,7 +190,7 @@ function ProjectCard({ project, getNextStage, getStageProgress, navigate }) {
 
   return (
     <div
-      onClick={() => navigate(`/projects/${project._id}`)}
+      onClick={() => navigate(`/dashboard/projects/${project._id}`)}
       className="project-card-enhanced"
     >
       {/* Header */}
@@ -323,6 +323,12 @@ export default function PerformanceMarketerDashboard({ user }) {
   const [projects, setProjects] = useState([]);
   const [pendingApprovals, setPendingApprovals] = useState([]);
 
+  // Rejection modal state
+  const [showRejectModal, setShowRejectModal] = useState(false);
+  const [selectedTask, setSelectedTask] = useState(null);
+  const [rejectionNote, setRejectionNote] = useState('');
+  const [rejectionReason, setRejectionReason] = useState('');
+
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
@@ -411,13 +417,33 @@ export default function PerformanceMarketerDashboard({ user }) {
   };
 
   const handleRejectTask = async (taskId) => {
+    if (!rejectionNote.trim()) {
+      toast.error('Please provide feedback for rejection');
+      return;
+    }
+
     try {
-      await taskService.marketerReview(taskId, { approved: false });
-      toast.success('Task rejected');
+      await taskService.marketerReview(taskId, {
+        approved: false,
+        rejectionNote,
+        rejectionReason
+      });
+      toast.success('Task rejected with feedback');
+      setShowRejectModal(false);
+      setSelectedTask(null);
+      setRejectionNote('');
+      setRejectionReason('');
       fetchDashboardData();
     } catch (err) {
       toast.error('Failed to reject task');
     }
+  };
+
+  const openRejectModal = (task) => {
+    setSelectedTask(task);
+    setRejectionNote('');
+    setRejectionReason('');
+    setShowRejectModal(true);
   };
 
   const getNextStage = (project) => {
@@ -533,7 +559,7 @@ export default function PerformanceMarketerDashboard({ user }) {
           icon={Activity}
           iconBg="bg-gradient-to-br from-emerald-500 to-emerald-600"
           clickable
-          onClick={() => navigate('/projects?status=active')}
+          onClick={() => navigate('/dashboard/projects?status=active')}
         />
         <StatCard
           title="Pending Approval"
@@ -542,7 +568,7 @@ export default function PerformanceMarketerDashboard({ user }) {
           icon={ClipboardCheck}
           iconBg="bg-gradient-to-br from-amber-500 to-amber-600"
           clickable
-          onClick={() => navigate('/tasks/approval')}
+          onClick={() => navigate('/dashboard/tasks/approval')}
         />
         <StatCard
           title="Completed"
@@ -565,7 +591,7 @@ export default function PerformanceMarketerDashboard({ user }) {
                 <p className="text-sm text-gray-500">Reviewed by tester, needs your sign-off</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate('/tasks/approval')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/tasks/approval')}>
               View All
               <ChevronRight size={16} className="ml-1" />
             </Button>
@@ -577,14 +603,14 @@ export default function PerformanceMarketerDashboard({ user }) {
                 key={task._id}
                 task={task}
                 onApprove={handleApproveTask}
-                onReject={handleRejectTask}
+                onReject={() => openRejectModal(task)}
               />
             ))}
           </div>
 
           {pendingApprovals.length > 6 && (
             <div className="mt-4 text-center">
-              <Button variant="outline" onClick={() => navigate('/tasks/approval')}>
+              <Button variant="outline" onClick={() => navigate('/dashboard/tasks/approval')}>
                 View All {pendingApprovals.length} Tasks
               </Button>
             </div>
@@ -704,7 +730,7 @@ export default function PerformanceMarketerDashboard({ user }) {
                 <p className="text-sm text-gray-500">Continue working on strategy stages</p>
               </div>
             </div>
-            <Button variant="outline" size="sm" onClick={() => navigate('/projects')}>
+            <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/projects')}>
               View All
               <ChevronRight size={16} className="ml-1" />
             </Button>
@@ -737,7 +763,7 @@ export default function PerformanceMarketerDashboard({ user }) {
             </div>
           </div>
           <button
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/dashboard/projects')}
             className="text-sm font-medium text-primary-600 hover:text-primary-700 flex items-center gap-1"
           >
             View All
@@ -767,6 +793,66 @@ export default function PerformanceMarketerDashboard({ user }) {
           </div>
         )}
       </div>
+
+      {/* Rejection Modal */}
+      {showRejectModal && selectedTask && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+            <h2 className="text-xl font-semibold mb-4 text-red-600">Reject Task</h2>
+            <p className="text-gray-600 mb-4">{selectedTask.taskTitle}</p>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Reason for Rejection
+                </label>
+                <select
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="">Select a reason...</option>
+                  <option value="quality">Quality issues</option>
+                  <option value="brand">Brand guideline mismatch</option>
+                  <option value="instructions">Did not follow instructions</option>
+                  <option value="design">Design/Layout issues</option>
+                  <option value="content">Content/Copy issues</option>
+                  <option value="technical">Technical issues</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Detailed Feedback
+                </label>
+                <Textarea
+                  value={rejectionNote}
+                  onChange={(e) => setRejectionNote(e.target.value)}
+                  placeholder="Provide specific feedback for improvement..."
+                  rows={4}
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <Button variant="secondary" onClick={() => {
+                setShowRejectModal(false);
+                setSelectedTask(null);
+                setRejectionNote('');
+                setRejectionReason('');
+              }}>
+                Cancel
+              </Button>
+              <Button
+                onClick={() => handleRejectTask(selectedTask._id)}
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Reject Task
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

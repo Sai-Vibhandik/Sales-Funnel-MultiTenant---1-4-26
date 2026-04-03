@@ -26,7 +26,7 @@ export default function CreativeStrategyPage() {
 
   useEffect(() => {
     if (!projectId) {
-      navigate('/projects');
+      navigate('/dashboard/projects');
       return;
     }
     fetchData();
@@ -68,10 +68,10 @@ export default function CreativeStrategyPage() {
 
       if (statusCode === 403) {
         toast.error('Complete Landing Page Strategy first to access Creative Strategy');
-        navigate('/projects');
+        navigate('/dashboard/projects');
       } else if (statusCode === 404) {
         toast.error('Project not found');
-        navigate('/projects');
+        navigate('/dashboard/projects');
       } else {
         toast.error(errorMessage);
       }
@@ -92,7 +92,7 @@ export default function CreativeStrategyPage() {
       });
 
       if (markComplete) {
-        navigate(`/tasks?projectId=${projectId}`);
+        navigate(`/dashboard/tasks?projectId=${projectId}`);
       }
     } catch (error) {
       console.error('Creative strategy save error:', error);
@@ -116,7 +116,7 @@ export default function CreativeStrategyPage() {
       {/* Header */}
       <div className="flex items-center gap-4">
         <button
-          onClick={() => navigate(`/projects/${projectId}`)}
+          onClick={() => navigate(`/dashboard/projects/${projectId}`)}
           className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
         >
           <ArrowLeft className="w-5 h-5" />

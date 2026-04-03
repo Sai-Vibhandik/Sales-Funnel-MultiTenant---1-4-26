@@ -39,12 +39,12 @@ const STAGE_ICONS = {
 };
 
 const STAGE_PATHS = {
-  onboarding: '/projects',
-  marketResearch: '/market-research',
-  offerEngineering: '/offer-engineering',
-  trafficStrategy: '/traffic-strategy',
-  landingPage: '/landing-pages',
-  creativeStrategy: '/creative-strategy',
+  onboarding: '/dashboard/projects',
+  marketResearch: '/dashboard/market-research',
+  offerEngineering: '/dashboard/offer-engineering',
+  trafficStrategy: '/dashboard/traffic-strategy',
+  landingPage: '/dashboard/landing-pages',
+  creativeStrategy: '/dashboard/creative-strategy',
 };
 
 // Note: landingPage now redirects to /landing-pages (list) instead of /landing-page-strategy (single)
@@ -163,7 +163,7 @@ export default function ProjectDetailPage() {
       setProject(response.data);
     } catch (error) {
       toast.error('Failed to load project');
-      navigate('/projects');
+      navigate('/dashboard/projects');
     } finally {
       setLoading(false);
     }
@@ -175,7 +175,7 @@ export default function ProjectDetailPage() {
     try {
       await projectService.deleteProject(id);
       toast.success('Project deleted successfully');
-      navigate('/projects');
+      navigate('/dashboard/projects');
     } catch (error) {
       toast.error('Failed to delete project');
     }
@@ -277,7 +277,7 @@ export default function ProjectDetailPage() {
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/dashboard/projects')}
             className="p-2"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -338,14 +338,14 @@ export default function ProjectDetailPage() {
           {isAdmin ? (
             <Button
               variant="secondary"
-              onClick={() => navigate(`/projects/${id}/assign-team`)}
+              onClick={() => navigate(`/dashboard/projects/${id}/assign-team`)}
             >
               <Users className="w-4 h-4 mr-2" />
               Assign Team
             </Button>
           ) : (
             <>
-              <Button variant="secondary" onClick={() => navigate(`/projects/${id}/edit`)}>
+              <Button variant="secondary" onClick={() => navigate(`/dashboard/projects/${id}/edit`)}>
                 <Edit className="w-4 h-4 mr-2" />
                 Edit
               </Button>
@@ -453,7 +453,7 @@ export default function ProjectDetailPage() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => navigate(`/projects/${id}/assign-team`)}
+                onClick={() => navigate(`/dashboard/projects/${id}/assign-team`)}
               >
                 <UserPlus className="w-4 h-4 mr-2" />
                 Manage Team
@@ -484,7 +484,7 @@ export default function ProjectDetailPage() {
                   <Button
                     variant="secondary"
                     className="mt-4"
-                    onClick={() => navigate(`/projects/${id}/assign-team`)}
+                    onClick={() => navigate(`/dashboard/projects/${id}/assign-team`)}
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     Assign Team
@@ -673,14 +673,14 @@ export default function ProjectDetailPage() {
             <div className="flex justify-center gap-3">
               <Button
                 variant="secondary"
-                onClick={() => navigate(`/projects/${id}/assign-team`)}
+                onClick={() => navigate(`/dashboard/projects/${id}/assign-team`)}
               >
                 <Users className="w-4 h-4 mr-2" />
                 Manage Team
               </Button>
               <Button
                 variant="secondary"
-                onClick={() => navigate('/team')}
+                onClick={() => navigate('/dashboard/team')}
               >
                 <UserPlus className="w-4 h-4 mr-2" />
                 View All Team Members

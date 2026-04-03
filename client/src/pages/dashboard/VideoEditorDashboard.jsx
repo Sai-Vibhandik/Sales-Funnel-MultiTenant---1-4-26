@@ -330,7 +330,7 @@ export default function VideoEditorDashboard({ user }) {
           title="No video tasks assigned"
           description="You don't have any video editing tasks assigned yet. Tasks will appear here once content is approved and ready for video production."
           action={
-            <Button onClick={() => navigate('/projects')}>
+            <Button onClick={() => navigate('/dashboard/projects')}>
               <FolderKanban size={16} className="mr-2" />
               View Projects
             </Button>
@@ -361,11 +361,11 @@ export default function VideoEditorDashboard({ user }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate('/projects')}>
+          <Button variant="outline" onClick={() => navigate('/dashboard/projects')}>
             <FolderKanban size={18} className="mr-2" />
             Projects
           </Button>
-          <Button onClick={() => navigate('/tasks')}>
+          <Button onClick={() => navigate('/dashboard/tasks')}>
             <Film size={18} className="mr-2" />
             My Tasks
           </Button>
@@ -587,7 +587,7 @@ export default function VideoEditorDashboard({ user }) {
               return (
                 <div
                   key={task._id}
-                  onClick={() => navigate(`/tasks/${task._id}`)}
+                  onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
                   className="bg-white rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center gap-2 mb-1">
@@ -620,7 +620,7 @@ export default function VideoEditorDashboard({ user }) {
               <p className="text-sm text-gray-500">Your editing assignments</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/tasks')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/tasks')}>
             View All Tasks
             <ChevronRight size={16} className="ml-1" />
           </Button>
@@ -632,7 +632,7 @@ export default function VideoEditorDashboard({ user }) {
               <TaskCard
                 key={task._id}
                 task={task}
-                onClick={() => navigate(`/tasks/${task._id}`)}
+                onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
               />
             ))}
           </div>
@@ -643,7 +643,7 @@ export default function VideoEditorDashboard({ user }) {
             <p className="text-sm text-gray-500 mb-4">
               You haven't been assigned any video editing tasks yet. Tasks will appear here once content is approved.
             </p>
-            <Button variant="outline" onClick={() => navigate('/projects')}>
+            <Button variant="outline" onClick={() => navigate('/dashboard/projects')}>
               Browse Projects
             </Button>
           </div>
@@ -697,7 +697,7 @@ export default function VideoEditorDashboard({ user }) {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
-          onClick={() => navigate('/tasks')}
+          onClick={() => navigate('/dashboard/tasks')}
           className="p-4 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl text-white text-left hover:shadow-lg transition-all duration-200"
         >
           <Film size={24} className="mb-2" />
@@ -705,7 +705,7 @@ export default function VideoEditorDashboard({ user }) {
           <p className="text-sm text-white/80 mt-1">See all your video assignments</p>
         </button>
         <button
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/dashboard/projects')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <FolderKanban size={24} className="mb-2 text-primary-500" />
@@ -713,7 +713,7 @@ export default function VideoEditorDashboard({ user }) {
           <p className="text-sm text-gray-500 mt-1">View assigned projects</p>
         </button>
         <button
-          onClick={() => navigate('/tasks?status=pending')}
+          onClick={() => navigate('/dashboard/tasks?status=pending')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <Video size={24} className="mb-2 text-yellow-500" />
@@ -739,7 +739,7 @@ export default function VideoEditorDashboard({ user }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/tasks?status=rejected')}
+            onClick={() => navigate('/dashboard/tasks?status=rejected')}
             className="border-red-300 text-red-700 hover:bg-red-100"
           >
             View Revisions

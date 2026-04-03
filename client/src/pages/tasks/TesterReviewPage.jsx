@@ -497,7 +497,7 @@ export default function TesterReviewPage() {
                     <Button
                       size="sm"
                       variant="outline"
-                      onClick={() => navigate(`/tasks/${task._id}`)}
+                      onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
                       className="text-blue-600 border-blue-300 hover:bg-blue-50"
                     >
                       <Eye className="w-4 h-4 mr-1" />

@@ -701,25 +701,29 @@ export default function TaskDetailPage() {
   };
 
   const canResubmitTask = () => {
-    // For landing page tasks that have been rejected
-    // They can resubmit from design_rejected or development_pending (with rejection notes)
-    // Only show "Resubmit" if the task was previously rejected (has rejection note/reason)
-    return task && ['design_rejected', 'development_pending'].includes(task.status) &&
-           (task.taskType === 'landing_page_design' || task.taskType === 'landing_page_development') &&
-           (task.rejectionNote || task.rejectionReason) &&
-           isAssignedUser();
+    // For tasks that have been rejected and need resubmission
+    // Show "Resubmit" button for:
+    // - design_rejected: Landing page designs rejected by tester/marketer
+    // - rejected: Development tasks rejected by marketer (final rejection)
+    // - development_pending with rejection notes: Development tasks rejected by tester
+    return task && isAssignedUser() && (
+      (task.status === 'design_rejected' && task.taskType === 'landing_page_design') ||
+      (task.status === 'rejected' && task.taskType === 'landing_page_development') ||
+      (task.status === 'development_pending' && task.taskType === 'landing_page_development' && (task.rejectionNote || task.rejectionReason))
+    );
   };
 
   const canSubmitLandingPage = () => {
-    // Landing page design/development tasks can be submitted directly from their pending states
-    // Only if they haven't been rejected yet (first submission)
+    // Landing page design can be submitted from design_pending (first submission)
     return task && task.status === 'design_pending' && task.taskType === 'landing_page_design' &&
-           !task.rejectionNote && isAssignedUser();
+           isAssignedUser();
   };
 
   const canSubmitLandingPageDev = () => {
+    // Landing page development can be submitted from development_pending (first submission)
+    // Only if there's no rejection note (otherwise it's a resubmit)
     return task && task.status === 'development_pending' && task.taskType === 'landing_page_development' &&
-           !task.rejectionNote && isAssignedUser();
+           !task.rejectionNote && !task.rejectionReason && isAssignedUser();
   };
 
   const canTesterReview = () => {

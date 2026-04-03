@@ -11,6 +11,7 @@ const {
   PENDING_STATUSES,
   SUBMITTED_STATUSES,
   APPROVED_STATUSES,
+  TESTER_APPROVED_STATUSES,
   FINAL_STATUSES,
   REJECTED_STATUSES,
   STATUS_CONFIG,
@@ -1201,6 +1202,26 @@ exports.marketerReview = async (req, res, next) => {
 
     await task.save();
 
+    // If landing page development is approved, mark the landingPage stage as completed
+    if (approved && newStatus === 'final_approved' && task.taskType === 'landing_page_development') {
+      try {
+        const project = await Project.findOne({
+          _id: task.projectId._id || task.projectId,
+          organizationId: req.user.currentOrganization
+        });
+
+        if (project && !project.stages.landingPage.isCompleted) {
+          project.stages.landingPage.isCompleted = true;
+          project.stages.landingPage.completedAt = new Date();
+          await project.save();
+          console.log(`Landing page stage marked complete for project ${project.projectName || project.businessName}`);
+        }
+      } catch (error) {
+        console.error('Error marking landingPage stage as complete:', error);
+        // Don't fail the approval if stage update fails
+      }
+    }
+
     // Notify assigned user
     if (task.assignedTo) {
       await Notification.create({
@@ -1552,8 +1573,9 @@ exports.getPendingMarketerApproval = async (req, res, next) => {
 exports.getApprovedAssets = async (req, res, next) => {
   try {
     // Get tasks that have been approved by tester or are fully approved
-    // Use centralized constants: APPROVED_STATUSES + FINAL_STATUSES
-    const approvedStatuses = [...APPROVED_STATUSES, ...FINAL_STATUSES];
+    // Use TESTER_APPROVED_STATUSES to include content_final_approved
+    // Note: content_final_approved tasks don't go to marketer, but should show in approved assets
+    const approvedStatuses = [...TESTER_APPROVED_STATUSES, ...FINAL_STATUSES];
 
     const tasks = await Task.find({
       status: { $in: approvedStatuses }

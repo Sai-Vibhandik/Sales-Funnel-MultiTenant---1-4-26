@@ -347,11 +347,11 @@ export default function UIDesignerDashboard({ user }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate('/projects')}>
+          <Button variant="outline" onClick={() => navigate('/dashboard/projects')}>
             <FolderKanban size={18} className="mr-2" />
             Projects
           </Button>
-          <Button onClick={() => navigate('/tasks')}>
+          <Button onClick={() => navigate('/dashboard/tasks')}>
             <Clock size={18} className="mr-2" />
             My Tasks
           </Button>
@@ -564,7 +564,7 @@ export default function UIDesignerDashboard({ user }) {
               <p className="text-sm text-gray-500">Your assigned design work</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/tasks')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/tasks')}>
             View All Tasks
             <ChevronRight size={16} className="ml-1" />
           </Button>
@@ -576,7 +576,7 @@ export default function UIDesignerDashboard({ user }) {
               <TaskCard
                 key={task._id}
                 task={task}
-                onClick={() => navigate(`/tasks/${task._id}`)}
+                onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
               />
             ))}
           </div>
@@ -587,7 +587,7 @@ export default function UIDesignerDashboard({ user }) {
             <p className="text-sm text-gray-500 mb-4">
               You haven't been assigned any design tasks yet. Tasks will appear here once they're created.
             </p>
-            <Button variant="outline" onClick={() => navigate('/projects')}>
+            <Button variant="outline" onClick={() => navigate('/dashboard/projects')}>
               Browse Projects
             </Button>
           </div>
@@ -597,7 +597,7 @@ export default function UIDesignerDashboard({ user }) {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
-          onClick={() => navigate('/tasks')}
+          onClick={() => navigate('/dashboard/tasks')}
           className="p-4 bg-gradient-to-br from-purple-400 to-purple-600 rounded-2xl text-white text-left hover:shadow-lg transition-all duration-200"
         >
           <Clock size={24} className="mb-2" />
@@ -605,7 +605,7 @@ export default function UIDesignerDashboard({ user }) {
           <p className="text-sm text-white/80 mt-1">See all your design assignments</p>
         </button>
         <button
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/dashboard/projects')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <FolderKanban size={24} className="mb-2 text-primary-500" />
@@ -613,7 +613,7 @@ export default function UIDesignerDashboard({ user }) {
           <p className="text-sm text-gray-500 mt-1">View assigned projects</p>
         </button>
         <button
-          onClick={() => navigate('/creatives')}
+          onClick={() => navigate('/dashboard/creatives')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <Upload size={24} className="mb-2 text-green-500" />
@@ -639,7 +639,7 @@ export default function UIDesignerDashboard({ user }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/tasks?status=rejected')}
+            onClick={() => navigate('/dashboard/tasks?status=rejected')}
             className="border-red-300 text-red-700 hover:bg-red-100"
           >
             View Rejected

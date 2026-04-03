@@ -102,6 +102,13 @@ const APPROVED_STATUSES = [
   'development_approved'   // Development approved by tester, awaiting marketer
 ];
 
+// All tester-approved statuses (for showing approved assets to testers)
+// This includes content_final_approved which doesn't go to marketer
+const TESTER_APPROVED_STATUSES = [
+  ...APPROVED_STATUSES,
+  'content_final_approved'  // Content approved by tester, handed off to design
+];
+
 // Tasks fully approved (completed)
 const FINAL_STATUSES = ['final_approved'];
 
@@ -514,6 +521,7 @@ module.exports = {
   PENDING_STATUSES,
   SUBMITTED_STATUSES,
   APPROVED_STATUSES,
+  TESTER_APPROVED_STATUSES,
   FINAL_STATUSES,
   REJECTED_STATUSES,
   ACTIVE_STATUSES,

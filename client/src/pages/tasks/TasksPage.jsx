@@ -30,7 +30,7 @@ const ROLE_STATUSES = {
   video_editor: ['design_pending', 'design_submitted', 'design_approved', 'design_rejected'],
   ui_ux_designer: ['design_pending', 'design_submitted', 'design_approved', 'design_rejected'],
   // Developers: see development workflow statuses
-  developer: ['development_pending', 'development_submitted', 'development_approved'],
+  developer: ['development_pending', 'development_submitted', 'development_approved', 'rejected'],
   // Testers: see submitted statuses for review
   tester: ['content_submitted', 'design_submitted', 'development_submitted'],
   // Marketers: see approved statuses for final review
@@ -284,7 +284,11 @@ export default function TasksPage() {
   };
 
   const canResubmitTask = (task) => {
-    return task.status === 'rejected';
+    // Can resubmit if task is in a rejected state
+    return task.status === 'rejected' ||
+           task.status === 'design_rejected' ||
+           task.status === 'content_rejected' ||
+           (task.status === 'development_pending' && (task.rejectionNote || task.rejectionReason));
   };
 
   const getSubmitStatus = (task) => {
@@ -309,7 +313,7 @@ export default function TasksPage() {
           {projectId && (
             <Button
               variant="ghost"
-              onClick={() => navigate(`/projects/${projectId}`)}
+              onClick={() => navigate(`/dashboard/projects/${projectId}`)}
               className="p-2"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -441,7 +445,7 @@ export default function TasksPage() {
                     )}
 
                     {/* Rejection Note */}
-                    {(task.status === 'rejected' || (task.status === 'development_pending' && task.rejectionNote)) && (
+                    {(task.status === 'rejected' || task.status === 'design_rejected' || task.status === 'content_rejected' || (task.status === 'development_pending' && task.rejectionNote)) && (
                       <div className="mt-3 p-3 bg-red-50 rounded border border-red-200">
                         <h4 className="text-sm font-medium text-red-800 mb-1 flex items-center gap-1">
                           <AlertCircle className="w-4 h-4" />
@@ -482,7 +486,7 @@ export default function TasksPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => navigate(`/tasks/${task._id}`)}
+                      onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       View
@@ -497,7 +501,7 @@ export default function TasksPage() {
                         Submit for Review
                       </Button>
                     )}
-                    {task.status === 'rejected' && (
+                    {(task.status === 'rejected' || task.status === 'design_rejected' || task.status === 'content_rejected') && (
                       <Button
                         size="sm"
                         onClick={() => openContentModal(task)}

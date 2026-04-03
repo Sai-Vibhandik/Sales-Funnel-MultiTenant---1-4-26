@@ -144,7 +144,7 @@ export default function PerformanceMarketerAssetsPage() {
             <Card
               key={project._id}
               className="hover:shadow-md transition-shadow cursor-pointer"
-              onClick={() => navigate(`/assets/project/${project._id}`)}
+              onClick={() => navigate(`/dashboard/assets/project/${project._id}`)}
             >
               <CardBody className="p-6">
                 <div className="flex items-start justify-between">
@@ -207,7 +207,7 @@ export default function PerformanceMarketerAssetsPage() {
                       size="sm"
                       onClick={(e) => {
                         e.stopPropagation();
-                        navigate(`/assets/project/${project._id}`);
+                        navigate(`/dashboard/assets/project/${project._id}`);
                       }}
                     >
                       View Details

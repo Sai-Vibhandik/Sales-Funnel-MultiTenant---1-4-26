@@ -528,7 +528,7 @@ export default function MarketerApprovalPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => navigate(`/tasks/${task._id}`)}
+                      onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       View Task
@@ -536,7 +536,7 @@ export default function MarketerApprovalPage() {
                     <Button
                       size="sm"
                       variant="ghost"
-                      onClick={() => navigate(`/projects/${task.projectId?._id}`)}
+                      onClick={() => navigate(`/dashboard/projects/${task.projectId?._id}`)}
                     >
                       <ArrowRight className="w-4 h-4 mr-1" />
                       View Project

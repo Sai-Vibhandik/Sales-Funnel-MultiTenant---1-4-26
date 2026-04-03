@@ -73,7 +73,7 @@ export default function TrafficStrategyPage() {
 
   useEffect(() => {
     if (!projectId) {
-      navigate('/projects');
+      navigate('/dashboard/projects');
       return;
     }
     fetchData();
@@ -129,10 +129,10 @@ export default function TrafficStrategyPage() {
 
       if (statusCode === 403) {
         toast.error('Complete Offer Engineering first to access Traffic Strategy');
-        navigate('/projects');
+        navigate('/dashboard/projects');
       } else if (statusCode === 404) {
         toast.error('Project not found');
-        navigate('/projects');
+        navigate('/dashboard/projects');
       } else {
         toast.error(errorMessage);
       }
@@ -183,7 +183,7 @@ export default function TrafficStrategyPage() {
           }));
           toast.success('Traffic strategy completed! Moving to Landing Pages...');
           setTimeout(() => {
-            navigate(`/landing-pages?projectId=${projectId}`);
+            navigate(`/dashboard/landing-pages?projectId=${projectId}`);
           }, 1500);
         } else {
           toast.success('Progress saved!');
@@ -203,7 +203,7 @@ export default function TrafficStrategyPage() {
         });
         toast.success(markComplete ? 'Traffic strategy completed!' : 'Progress saved!');
         if (markComplete) {
-          navigate(`/landing-pages?projectId=${projectId}`);
+          navigate(`/dashboard/landing-pages?projectId=${projectId}`);
         }
       }
     } catch (error) {
@@ -236,7 +236,7 @@ export default function TrafficStrategyPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate(`/projects/${projectId}`)} className="p-2">
+        <Button variant="ghost" onClick={() => navigate(`/dashboard/projects/${projectId}`)} className="p-2">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">
@@ -461,7 +461,7 @@ export default function TrafficStrategyPage() {
             </Button>
           </>
         ) : (
-          <Button onClick={() => navigate(`/landing-pages?projectId=${projectId}`)}>
+          <Button onClick={() => navigate(`/dashboard/landing-pages?projectId=${projectId}`)}>
             Continue to Landing Pages
             <ArrowLeft className="w-4 h-4 ml-2 rotate-180" />
           </Button>

@@ -51,7 +51,7 @@ export default function LandingPageStrategyPage() {
 
   useEffect(() => {
     if (!projectId) {
-      navigate('/projects');
+      navigate('/dashboard/projects');
       return;
     }
     fetchData();
@@ -82,7 +82,7 @@ export default function LandingPageStrategyPage() {
       // Check if traffic strategy is completed
       if (!projectRes.data.stages?.trafficStrategy?.isCompleted) {
         toast.error('Complete Traffic Strategy first to access Landing Pages');
-        navigate('/projects');
+        navigate('/dashboard/projects');
         return;
       }
 
@@ -102,7 +102,7 @@ export default function LandingPageStrategyPage() {
           setAssignedDeveloper(lp.assignedDeveloper?._id || lp.assignedDeveloper?.toString() || '');
         } else {
           toast.error('Landing page not found');
-          navigate(`/landing-pages?projectId=${projectId}`);
+          navigate(`/dashboard/landing-pages?projectId=${projectId}`);
         }
       } else {
         // For new landing page, pre-select if only one designer/developer available
@@ -165,7 +165,7 @@ export default function LandingPageStrategyPage() {
       toast.success('Landing page saved!');
 
       // Navigate back to landing pages list
-      navigate(`/landing-pages?projectId=${projectId}`);
+      navigate(`/dashboard/landing-pages?projectId=${projectId}`);
     } catch (error) {
       console.error('Error saving landing page:', error);
       toast.error(error?.message || 'Failed to save landing page');
@@ -221,7 +221,7 @@ export default function LandingPageStrategyPage() {
       }
 
       // Navigate to creative strategy - no task generation
-      navigate(`/creative-strategy?projectId=${projectId}`);
+      navigate(`/dashboard/creative-strategy?projectId=${projectId}`);
     } catch (error) {
       console.error('Error saving landing page:', error);
       toast.error(error?.message || 'Failed to save landing page');
@@ -242,7 +242,7 @@ export default function LandingPageStrategyPage() {
     <div className="max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate(`/landing-pages?projectId=${projectId}`)} className="p-2">
+        <Button variant="ghost" onClick={() => navigate(`/dashboard/landing-pages?projectId=${projectId}`)} className="p-2">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">
@@ -429,7 +429,7 @@ export default function LandingPageStrategyPage() {
 
       {/* Actions */}
       <div className="flex justify-between gap-4">
-        <Button variant="secondary" onClick={() => navigate(`/landing-pages?projectId=${projectId}`)}>
+        <Button variant="secondary" onClick={() => navigate(`/dashboard/landing-pages?projectId=${projectId}`)}>
           <ArrowLeft className="w-4 h-4 mr-2" />
           Back to Landing Pages
         </Button>

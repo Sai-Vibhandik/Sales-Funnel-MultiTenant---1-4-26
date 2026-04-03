@@ -316,7 +316,7 @@ export default function TesterDashboard({ user }) {
 
   // Handle review action
   const handleReview = (task) => {
-    navigate('/tasks/review', { state: { taskId: task._id } });
+    navigate('/dashboard/tasks/review', { state: { taskId: task._id } });
   };
 
   if (loading) {
@@ -367,11 +367,11 @@ export default function TesterDashboard({ user }) {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate('/projects')}>
+          <Button variant="outline" onClick={() => navigate('/dashboard/projects')}>
             <FolderKanban size={18} className="mr-2" />
             Projects
           </Button>
-          <Button onClick={() => navigate('/tasks/review')} className="relative">
+          <Button onClick={() => navigate('/dashboard/tasks/review')} className="relative">
             <ClipboardCheck size={18} className="mr-2" />
             Review Queue
             {stats.totalPending > 0 && (
@@ -581,7 +581,7 @@ export default function TesterDashboard({ user }) {
               </Badge>
             )}
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/tasks/review')}>
+          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/tasks/review')}>
             View All
             <ChevronRight size={16} className="ml-1" />
           </Button>
@@ -604,7 +604,7 @@ export default function TesterDashboard({ user }) {
             <p className="text-sm text-gray-500 mb-4">
               No tasks pending review. Great job staying on top of things!
             </p>
-            <Button variant="outline" onClick={() => navigate('/tasks')}>
+            <Button variant="outline" onClick={() => navigate('/dashboard/tasks')}>
               View All Tasks
             </Button>
           </div>
@@ -640,7 +640,7 @@ export default function TesterDashboard({ user }) {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
-          onClick={() => navigate('/tasks/review')}
+          onClick={() => navigate('/dashboard/tasks/review')}
           className="p-4 bg-gradient-to-br from-orange-400 to-orange-600 rounded-2xl text-white text-left hover:shadow-lg transition-all duration-200"
         >
           <ClipboardCheck size={24} className="mb-2" />
@@ -653,7 +653,7 @@ export default function TesterDashboard({ user }) {
           )}
         </button>
         <button
-          onClick={() => navigate('/tasks')}
+          onClick={() => navigate('/dashboard/tasks')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <Bug size={24} className="mb-2 text-primary-500" />
@@ -661,7 +661,7 @@ export default function TesterDashboard({ user }) {
           <p className="text-sm text-gray-500 mt-1">View your assigned tasks</p>
         </button>
         <button
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/dashboard/projects')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <FolderKanban size={24} className="mb-2 text-green-500" />
@@ -687,7 +687,7 @@ export default function TesterDashboard({ user }) {
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/tasks/review')}
+            onClick={() => navigate('/dashboard/tasks/review')}
             className="border-orange-300 text-orange-700 hover:bg-orange-100"
           >
             Start Reviewing

@@ -23,7 +23,7 @@ export default function LandingPagesListPage() {
 
   useEffect(() => {
     if (!projectId) {
-      navigate('/projects');
+      navigate('/dashboard/projects');
       return;
     }
     fetchProject();
@@ -38,12 +38,12 @@ export default function LandingPagesListPage() {
       // Check if traffic strategy is completed
       if (!response.data.stages?.trafficStrategy?.isCompleted) {
         toast.error('Complete Traffic Strategy first to access Landing Pages');
-        navigate('/projects');
+        navigate('/dashboard/projects');
       }
     } catch (error) {
       console.error('Error fetching project:', error);
       toast.error('Failed to load project');
-      navigate('/projects');
+      navigate('/dashboard/projects');
     } finally {
       setLoading(false);
     }
@@ -58,7 +58,7 @@ export default function LandingPagesListPage() {
       setSkipping(true);
       await projectService.skipLandingPageStage(projectId);
       toast.success('Landing page stage skipped. Proceeding to Creative Strategy.');
-      navigate(`/creative-strategy?projectId=${projectId}`);
+      navigate(`/dashboard/creative-strategy?projectId=${projectId}`);
     } catch (error) {
       console.error('Error skipping landing page stage:', error);
       toast.error(error?.response?.data?.message || 'Failed to skip landing page stage');
@@ -79,7 +79,7 @@ export default function LandingPagesListPage() {
     <div className="max-w-6xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center gap-4">
-        <Button variant="ghost" onClick={() => navigate(`/projects/${projectId}`)} className="p-2">
+        <Button variant="ghost" onClick={() => navigate(`/dashboard/projects/${projectId}`)} className="p-2">
           <ArrowLeft className="w-5 h-5" />
         </Button>
         <div className="flex-1">

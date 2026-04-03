@@ -297,7 +297,7 @@ export default function ProjectAssetsDetailPage() {
               <Button
                 size="sm"
                 variant="secondary"
-                onClick={() => navigate(`/tasks/${task._id}`, { state: { from: `/assets/project/${projectId}` } })}
+                onClick={() => navigate(`/dashboard/tasks/${task._id}`, { state: { from: `/dashboard/assets/project/${projectId}` } })}
               >
                 <Eye className="w-4 h-4 mr-1" />
                 View Details
@@ -324,7 +324,7 @@ export default function ProjectAssetsDetailPage() {
           <CardBody className="text-center py-12">
             <AlertCircle className="w-12 h-12 mx-auto text-red-400 mb-4" />
             <p className="text-gray-500">Project not found or you don't have access</p>
-            <Button className="mt-4" onClick={() => navigate('/assets')}>
+            <Button className="mt-4" onClick={() => navigate('/dashboard/assets')}>
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back to Assets
             </Button>
@@ -342,7 +342,7 @@ export default function ProjectAssetsDetailPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('/assets')}>
+          <Button variant="ghost" onClick={() => navigate('/dashboard/assets')}>
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back
           </Button>

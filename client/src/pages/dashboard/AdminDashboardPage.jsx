@@ -204,7 +204,7 @@ function TeamMemberCard({ member, onClick }) {
 function ProjectCard({ project, onClick }) {
   const statusConfig = getProjectStatusConfig(project.status);
   return (
-    <div onClick={onClick} className="project-card-enhanced">
+    <div onClick={onClick} className="project-card-enhanced cursor-pointer">
       <div className="flex items-start justify-between mb-3">
         <div>
           <h3 className="font-semibold text-gray-900">{project.projectName || project.businessName}</h3>
@@ -598,11 +598,11 @@ export default function AdminDashboardPage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate('/team')}>
+          <Button variant="outline" onClick={() => navigate('/dashboard/team')}>
             <Users size={18} className="mr-2" />
             Manage Team
           </Button>
-          <Button onClick={() => navigate('/projects/new')}>
+          <Button onClick={() => navigate('/dashboard/projects/new')}>
             <span className="mr-2">+</span> New Project
           </Button>
         </div>
@@ -821,7 +821,7 @@ export default function AdminDashboardPage() {
                     <span className="hidden sm:inline">List</span>
                   </button>
                 </div>
-                <Link to="/projects" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
+                <Link to="/dashboard/projects" className="text-sm text-primary-600 hover:text-primary-700 font-medium">
                   View All
                 </Link>
               </div>
@@ -839,7 +839,7 @@ export default function AdminDashboardPage() {
                   <ProjectCard
                     key={project._id}
                     project={project}
-                    onClick={() => navigate(`/projects/${project._id}`)}
+                    onClick={() => navigate(`/dashboard/projects/${project._id}`)}
                   />
                 ))}
               </div>
@@ -849,7 +849,7 @@ export default function AdminDashboardPage() {
                   <ProjectRow
                     key={project._id}
                     project={project}
-                    onClick={() => navigate(`/projects/${project._id}`)}
+                    onClick={() => navigate(`/dashboard/projects/${project._id}`)}
                   />
                 ))}
               </div>
@@ -865,7 +865,7 @@ export default function AdminDashboardPage() {
               <p className="text-sm text-gray-500 mt-1">Your team roster</p>
             </div>
             <button
-              onClick={() => navigate('/team')}
+              onClick={() => navigate('/dashboard/team')}
               className="text-sm text-primary-600 hover:text-primary-700 font-medium"
             >
               View All
@@ -884,7 +884,7 @@ export default function AdminDashboardPage() {
                 <TeamMemberCard
                   key={member._id}
                   member={member}
-                  onClick={() => navigate('/team')}
+                  onClick={() => navigate('/dashboard/team')}
                 />
               ))}
             </div>
@@ -895,7 +895,7 @@ export default function AdminDashboardPage() {
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
-          onClick={() => navigate('/projects/new')}
+          onClick={() => navigate('/dashboard/projects/new')}
           className="p-4 bg-gradient-to-br from-primary-400 to-primary-600 rounded-2xl text-white text-left hover:shadow-lg transition-all duration-200"
         >
           <FolderKanban size={24} className="mb-2" />
@@ -903,7 +903,7 @@ export default function AdminDashboardPage() {
           <p className="text-sm text-white/80 mt-1">Start a new client project</p>
         </button>
         <button
-          onClick={() => navigate('/team')}
+          onClick={() => navigate('/dashboard/team')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <UserPlus size={24} className="mb-2 text-primary-500" />
@@ -911,7 +911,7 @@ export default function AdminDashboardPage() {
           <p className="text-sm text-gray-500 mt-1">Invite new members</p>
         </button>
         <button
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/dashboard/projects')}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <Briefcase size={24} className="mb-2 text-green-500" />

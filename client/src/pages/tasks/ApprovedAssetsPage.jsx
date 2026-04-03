@@ -70,8 +70,8 @@ export default function ApprovedAssetsPage() {
 
   const filteredTasks = tasks.filter(task => {
     if (filter === 'all') return true;
-    if (filter === 'awaiting_marketer') return ['approved_by_tester', 'development_approved'].includes(task.status);
-    if (filter === 'fully_approved') return task.status === 'final_approved';
+    if (filter === 'awaiting_marketer') return ['approved_by_tester', 'development_approved', 'design_approved'].includes(task.status);
+    if (filter === 'fully_approved') return ['final_approved', 'content_final_approved'].includes(task.status);
     return true;
   });
 
@@ -92,7 +92,7 @@ export default function ApprovedAssetsPage() {
           <p className="text-gray-600 mt-1">Assets that have passed testing review</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="secondary" onClick={() => navigate('/tasks/review')}>
+          <Button variant="secondary" onClick={() => navigate('/dashboard/tasks/review')}>
             Review Queue
           </Button>
         </div>
@@ -120,7 +120,7 @@ export default function ApprovedAssetsPage() {
               <div>
                 <p className="text-sm text-gray-500">Awaiting Marketer</p>
                 <p className="text-2xl font-bold text-blue-600">
-                  {tasks.filter(t => ['approved_by_tester', 'development_approved'].includes(t.status)).length}
+                  {tasks.filter(t => ['approved_by_tester', 'development_approved', 'design_approved'].includes(t.status)).length}
                 </p>
               </div>
               <div className="p-3 bg-blue-100 rounded-lg">
@@ -136,7 +136,7 @@ export default function ApprovedAssetsPage() {
               <div>
                 <p className="text-sm text-gray-500">Fully Approved</p>
                 <p className="text-2xl font-bold text-green-600">
-                  {tasks.filter(t => t.status === 'final_approved').length}
+                  {tasks.filter(t => ['final_approved', 'content_final_approved'].includes(t.status)).length}
                 </p>
               </div>
               <div className="p-3 bg-green-100 rounded-lg">
@@ -284,7 +284,7 @@ export default function ApprovedAssetsPage() {
                     <Button
                       size="sm"
                       variant="secondary"
-                      onClick={() => navigate(`/tasks/${task._id}`)}
+                      onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
                     >
                       <Eye className="w-4 h-4 mr-1" />
                       View Details

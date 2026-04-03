@@ -84,7 +84,7 @@ export default function TeamMemberProjectView() {
       setTasks(tasksRes.data || []);
     } catch (error) {
       toast.error('Failed to load project');
-      navigate('/projects');
+      navigate('/dashboard/projects');
     } finally {
       setLoading(false);
     }
@@ -187,7 +187,7 @@ export default function TeamMemberProjectView() {
         <div className="flex items-center gap-4">
           <Button
             variant="ghost"
-            onClick={() => navigate('/projects')}
+            onClick={() => navigate('/dashboard/projects')}
             className="p-2"
           >
             <ArrowLeft className="w-5 h-5" />
@@ -261,7 +261,7 @@ export default function TeamMemberProjectView() {
               <Button
                 variant="secondary"
                 size="sm"
-                onClick={() => navigate(`/projects/${id}/strategy-summary`)}
+                onClick={() => navigate(`/dashboard/projects/${id}/strategy-summary`)}
               >
                 <Eye className="w-4 h-4 mr-2" />
                 View Full Strategy
@@ -893,7 +893,7 @@ export default function TeamMemberProjectView() {
 
                       <Button
                         size="sm"
-                        onClick={() => navigate(`/tasks/${task._id}`)}
+                        onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
                       >
                         <Eye className="w-4 h-4 mr-1" />
                         View Task

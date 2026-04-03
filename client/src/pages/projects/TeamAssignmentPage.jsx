@@ -140,7 +140,7 @@ export default function TeamAssignmentPage() {
     } catch (error) {
       console.error('Failed to load data:', error);
       toast.error('Failed to load data');
-      navigate('/projects');
+      navigate('/dashboard/projects');
     } finally {
       setLoading(false);
     }
@@ -210,7 +210,7 @@ export default function TeamAssignmentPage() {
 
       await projectService.assignTeam(id, assignedTeamData);
       toast.success('Team assigned successfully!');
-      navigate('/projects');
+      navigate('/dashboard/projects');
     } catch (error) {
       console.error('handleSave error:', error);
       toast.error(error.message || 'Failed to assign team');
@@ -223,7 +223,7 @@ export default function TeamAssignmentPage() {
     try {
       await projectService.toggleActivation(id, true);
       toast.success('Project activated successfully!');
-      navigate('/projects');
+      navigate('/dashboard/projects');
     } catch (error) {
       toast.error(error.message || 'Failed to activate project');
     }
@@ -247,7 +247,7 @@ export default function TeamAssignmentPage() {
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/dashboard/projects')}
           className="p-2"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -398,7 +398,7 @@ export default function TeamAssignmentPage() {
       <div className="flex justify-end gap-4">
         <Button
           variant="outline"
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/dashboard/projects')}
         >
           Cancel
         </Button>

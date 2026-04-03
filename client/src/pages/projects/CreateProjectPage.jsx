@@ -195,7 +195,7 @@ export default function CreateProjectPage() {
       const response = await projectService.createProject(projectData);
       toast.success('Project created successfully!');
       // Redirect to team assignment page
-      navigate(`/projects/${response.data._id}/assign-team`);
+      navigate(`/dashboard/projects/${response.data._id}/assign-team`);
     } catch (error) {
       toast.error(error.message || 'Failed to create project');
     } finally {
@@ -209,7 +209,7 @@ export default function CreateProjectPage() {
       <div className="flex items-center gap-4">
         <Button
           variant="ghost"
-          onClick={() => navigate('/projects')}
+          onClick={() => navigate('/dashboard/projects')}
           className="p-2"
         >
           <ArrowLeft className="w-5 h-5" />
@@ -480,7 +480,7 @@ export default function CreateProjectPage() {
               <Button
                 type="button"
                 variant="secondary"
-                onClick={() => navigate('/projects')}
+                onClick={() => navigate('/dashboard/projects')}
               >
                 Cancel
               </Button>

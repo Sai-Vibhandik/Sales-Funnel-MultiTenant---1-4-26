@@ -86,7 +86,7 @@ function ProjectCard({ project, onDelete, isAdmin, navigate }) {
   // Navigate to project details - all roles see the same project details page
   // which internally shows role-specific content
   const handleClick = () => {
-    navigate(`/projects/${project._id}`);
+    navigate(`/dashboard/projects/${project._id}`);
   };
 
   return (
@@ -362,7 +362,7 @@ export default function ProjectsListPage() {
         </div>
         {isAdmin && (
           <button
-            onClick={() => navigate('/projects/new')}
+            onClick={() => navigate('/dashboard/projects/new')}
             className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl shadow-lg shadow-primary-500/25 hover:shadow-xl hover:shadow-primary-500/30 transition-all"
           >
             <Plus size={18} />
@@ -473,7 +473,7 @@ export default function ProjectsListPage() {
           </p>
           {isAdmin && (
             <button
-              onClick={() => navigate('/projects/new')}
+              onClick={() => navigate('/dashboard/projects/new')}
               className="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-primary-500 to-primary-600 text-white font-medium rounded-xl shadow-lg shadow-primary-500/25 hover:shadow-xl transition-all"
             >
               <Plus size={18} />

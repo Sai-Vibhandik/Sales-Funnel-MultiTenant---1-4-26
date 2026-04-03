@@ -79,7 +79,7 @@ export default function LandingPagesList({ projectId, readOnly = false }) {
       toast.success('Landing page created');
       // Navigate to edit the new landing page
       const newLandingPageId = response.data._id;
-      navigate(`/landing-page-strategy?projectId=${projectId}&landingPageId=${newLandingPageId}`);
+      navigate(`/dashboard/landing-page-strategy?projectId=${projectId}&landingPageId=${newLandingPageId}`);
     } catch (error) {
       console.error('Error creating landing page:', error);
       toast.error(error?.message || 'Failed to create landing page');
@@ -109,7 +109,7 @@ export default function LandingPagesList({ projectId, readOnly = false }) {
   };
 
   const handleEditLandingPage = (landingPageId) => {
-    navigate(`/landing-page-strategy?projectId=${projectId}&landingPageId=${landingPageId}`);
+    navigate(`/dashboard/landing-page-strategy?projectId=${projectId}&landingPageId=${landingPageId}`);
   };
 
   const handleContinue = async () => {
@@ -131,11 +131,11 @@ export default function LandingPagesList({ projectId, readOnly = false }) {
       await projectService.completeLandingPageStage(projectId);
       toast.success('Landing page stage completed!');
       // Navigate to creative strategy
-      navigate(`/creative-strategy?projectId=${projectId}`);
+      navigate(`/dashboard/creative-strategy?projectId=${projectId}`);
     } catch (error) {
       console.error('Error completing landing page stage:', error);
       // Even if completion fails, try to navigate if there are landing pages
-      navigate(`/creative-strategy?projectId=${projectId}`);
+      navigate(`/dashboard/creative-strategy?projectId=${projectId}`);
     } finally {
       setCompleting(false);
     }
