@@ -28,6 +28,8 @@ const promptRoutes = require("./routes/promptRoutes");
 const aiRoutes = require("./routes/aiRoutes");
 const frameworkCategoryRoutes = require("./routes/frameworkCategoryRoutes");
 const platformAdminRoutes = require("./routes/platformAdmin");
+const billingRoutes = require("./routes/billing");
+const webhookRoutes = require("./routes/webhooks");
 
 // Socket.io
 const { setIO } = require("./controllers/projectController");
@@ -86,6 +88,8 @@ app.use("/api/prompts", protect, setTenantContext, promptRoutes);
 app.use("/api/ai", protect, setTenantContext, requireOrganization, aiRoutes);
 app.use("/api/framework-categories", protect, setTenantContext, requireOrganization, frameworkCategoryRoutes);
 app.use("/api/platform", platformAdminRoutes);
+app.use("/api/billing", billingRoutes);
+app.use("/api/webhooks", webhookRoutes);
 
 // 404 handler
 app.use((req, res) => {

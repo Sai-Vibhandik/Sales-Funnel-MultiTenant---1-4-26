@@ -8,6 +8,9 @@ const Membership = require('../models/Membership');
 const Plan = require('../models/Plan');
 const Prompt = require('../models/Prompt');
 const UsageLog = require('../models/UsageLog');
+const Subscription = require('../models/Subscription');
+const AnalyticsService = require('../services/analyticsService');
+const UsageService = require('../services/usageService');
 
 /**
  * Platform Admin Routes
@@ -805,6 +808,449 @@ router.get('/logs', async (req, res) => {
     res.status(500).json({
       success: false,
       message: 'Failed to get activity logs'
+    });
+  }
+});
+
+// ============================================
+// Subscription Management Routes
+// ============================================
+
+/**
+ * @desc    Get all subscriptions
+ * @route   GET /api/platform/subscriptions
+ * @access  Private (Platform Admin only)
+ */
+router.get('/subscriptions', async (req, res) => {
+  try {
+    const { page, limit, status, plan, provider, search, sortBy, sortOrder } = req.query;
+
+    const result = await AnalyticsService.getAllSubscriptions({
+      page: parseInt(page) || 1,
+      limit: parseInt(limit) || 20,
+      status,
+      plan,
+      provider,
+      search,
+      sortBy: sortBy || 'createdAt',
+      sortOrder: sortOrder || 'desc'
+    });
+
+    res.json({
+      success: true,
+      data: result.subscriptions,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    console.error('Get subscriptions error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get subscriptions'
+    });
+  }
+});
+
+/**
+ * @desc    Get subscription details
+ * @route   GET /api/platform/subscriptions/:id
+ * @access  Private (Platform Admin only)
+ */
+router.get('/subscriptions/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const details = await AnalyticsService.getSubscriptionDetails(id);
+
+    res.json({
+      success: true,
+      data: details
+    });
+  } catch (error) {
+    console.error('Get subscription details error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get subscription details'
+    });
+  }
+});
+
+/**
+ * @desc    Get subscription details by organization
+ * @route   GET /api/platform/organizations/:id/subscription
+ * @access  Private (Platform Admin only)
+ */
+router.get('/organizations/:id/subscription', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const subscription = await Subscription.findOne({ organizationId: id });
+
+    if (!subscription) {
+      return res.json({
+        success: true,
+        data: null,
+        message: 'No subscription found for this organization'
+      });
+    }
+
+    const details = await AnalyticsService.getSubscriptionDetails(subscription._id);
+
+    res.json({
+      success: true,
+      data: details
+    });
+  } catch (error) {
+    console.error('Get organization subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get organization subscription'
+    });
+  }
+});
+
+/**
+ * @desc    Manually change organization plan
+ * @route   PUT /api/platform/organizations/:id/plan
+ * @access  Private (Platform Admin only)
+ */
+router.put('/organizations/:id/plan', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { planId, reason } = req.body;
+
+    const plan = await Plan.findById(planId);
+    if (!plan) {
+      return res.status(404).json({
+        success: false,
+        message: 'Plan not found'
+      });
+    }
+
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: 'Organization not found'
+      });
+    }
+
+    const oldPlan = organization.plan;
+
+    // Update organization
+    organization.plan = plan.slug;
+    organization.planName = plan.name;
+    organization.planLimits = plan.limits;
+    organization.features = plan.features;
+    organization.subscriptionProvider = organization.subscriptionProvider || 'manual';
+
+    await organization.save();
+
+    // Update or create subscription record
+    const subscription = await Subscription.findOneAndUpdate(
+      { organizationId: id },
+      {
+        organizationId: id,
+        plan: plan.slug,
+        planName: plan.name,
+        planLimits: plan.limits,
+        features: plan.features,
+        status: organization.subscriptionStatus || 'active',
+        provider: organization.subscriptionProvider || 'manual',
+        $push: {
+          planHistory: {
+            fromPlan: oldPlan,
+            toPlan: plan.slug,
+            changedAt: new Date(),
+            changedBy: req.user._id,
+            reason: reason || 'Manual override by admin'
+          }
+        }
+      },
+      { upsert: true, new: true }
+    );
+
+    // Log action
+    await UsageLog.logAction({
+      organizationId: id,
+      userId: req.user._id,
+      userRole: 'platform_admin',
+      action: 'platform.org.plan_change',
+      resource: 'organization',
+      resourceId: id,
+      details: { fromPlan: oldPlan, toPlan: plan.slug, reason }
+    });
+
+    res.json({
+      success: true,
+      message: 'Plan updated successfully',
+      data: {
+        organization: {
+          id: organization._id,
+          plan: organization.plan,
+          planName: organization.planName
+        },
+        subscription
+      }
+    });
+  } catch (error) {
+    console.error('Update organization plan error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to update organization plan'
+    });
+  }
+});
+
+/**
+ * @desc    Extend trial period
+ * @route   POST /api/platform/organizations/:id/extend-trial
+ * @access  Private (Platform Admin only)
+ */
+router.post('/organizations/:id/extend-trial', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { days, reason } = req.body;
+
+    if (!days || days < 1 || days > 365) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid number of days (must be 1-365)'
+      });
+    }
+
+    const organization = await Organization.findById(id);
+    if (!organization) {
+      return res.status(404).json({
+        success: false,
+        message: 'Organization not found'
+      });
+    }
+
+    // Calculate new trial end date
+    const currentTrialEnd = organization.trialEndsAt || new Date();
+    const newTrialEnd = new Date(currentTrialEnd);
+    newTrialEnd.setDate(newTrialEnd.getDate() + parseInt(days));
+
+    organization.trialEndsAt = newTrialEnd;
+    organization.subscriptionStatus = 'trialing';
+    await organization.save();
+
+    // Log action
+    await UsageLog.logAction({
+      organizationId: id,
+      userId: req.user._id,
+      userRole: 'platform_admin',
+      action: 'platform.org.trial_extended',
+      resource: 'organization',
+      resourceId: id,
+      details: { days, newTrialEnd, reason }
+    });
+
+    res.json({
+      success: true,
+      message: `Trial extended by ${days} days`,
+      data: {
+        trialEndsAt: organization.trialEndsAt
+      }
+    });
+  } catch (error) {
+    console.error('Extend trial error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to extend trial'
+    });
+  }
+});
+
+/**
+ * @desc    Override subscription status
+ * @route   PUT /api/platform/subscriptions/:id/override
+ * @access  Private (Platform Admin only)
+ */
+router.put('/subscriptions/:id/override', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status, reason } = req.body;
+
+    const validStatuses = ['active', 'canceled', 'past_due', 'trialing', 'paused'];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({
+        success: false,
+        message: `Invalid status. Valid statuses: ${validStatuses.join(', ')}`
+      });
+    }
+
+    const subscription = await Subscription.findById(id);
+    if (!subscription) {
+      return res.status(404).json({
+        success: false,
+        message: 'Subscription not found'
+      });
+    }
+
+    const oldStatus = subscription.status;
+
+    // Update subscription
+    subscription.status = status;
+    subscription.events.push({
+      eventId: `override_${Date.now()}`,
+      eventType: 'status_override',
+      provider: 'manual',
+      data: {
+        oldStatus,
+        newStatus: status,
+        reason,
+        overriddenBy: req.user._id
+      },
+      processed: true,
+      processedAt: new Date()
+    });
+    await subscription.save();
+
+    // Update organization
+    await Organization.findByIdAndUpdate(subscription.organizationId, {
+      subscriptionStatus: status
+    });
+
+    // Log action
+    await UsageLog.logAction({
+      organizationId: subscription.organizationId,
+      userId: req.user._id,
+      userRole: 'platform_admin',
+      action: 'platform.subscription.status_override',
+      resource: 'subscription',
+      resourceId: id,
+      details: { oldStatus, newStatus: status, reason }
+    });
+
+    res.json({
+      success: true,
+      message: 'Subscription status updated',
+      data: {
+        subscription: {
+          id: subscription._id,
+          status: subscription.status
+        }
+      }
+    });
+  } catch (error) {
+    console.error('Override subscription error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to override subscription'
+    });
+  }
+});
+
+// ============================================
+// Revenue Analytics Routes
+// ============================================
+
+/**
+ * @desc    Get platform-wide usage metrics
+ * @route   GET /api/platform/usage
+ * @access  Private (Platform Admin only)
+ */
+router.get('/usage', async (req, res) => {
+  try {
+    const usage = await AnalyticsService.getPlatformUsage();
+
+    res.json({
+      success: true,
+      data: usage
+    });
+  } catch (error) {
+    console.error('Get platform usage error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get platform usage'
+    });
+  }
+});
+
+/**
+ * @desc    Get revenue analytics (MRR, ARR)
+ * @route   GET /api/platform/revenue
+ * @access  Private (Platform Admin only)
+ */
+router.get('/revenue', async (req, res) => {
+  try {
+    const { type = 'mrr', months } = req.query;
+
+    let data;
+
+    if (type === 'arr') {
+      data = await AnalyticsService.calculateARR();
+    } else if (type === 'trends') {
+      data = await AnalyticsService.getRevenueTrends(parseInt(months) || 12);
+    } else if (type === 'plans') {
+      data = await AnalyticsService.getRevenueByPlan();
+    } else if (type === 'churn') {
+      data = await AnalyticsService.calculateChurnRate(parseInt(months) || 3);
+    } else if (type === 'ltv') {
+      data = await AnalyticsService.calculateCustomerLifetimeValue();
+    } else {
+      data = await AnalyticsService.calculateMRR();
+    }
+
+    res.json({
+      success: true,
+      data
+    });
+  } catch (error) {
+    console.error('Get revenue error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get revenue analytics'
+    });
+  }
+});
+
+/**
+ * @desc    Get organization usage details
+ * @route   GET /api/platform/organizations/:id/usage
+ * @access  Private (Platform Admin only)
+ */
+router.get('/organizations/:id/usage', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usage = await UsageService.getUsageReport(id);
+
+    res.json({
+      success: true,
+      data: usage
+    });
+  } catch (error) {
+    console.error('Get organization usage error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to get organization usage'
+    });
+  }
+});
+
+/**
+ * @desc    Recalculate organization usage
+ * @route   POST /api/platform/organizations/:id/recalculate-usage
+ * @access  Private (Platform Admin only)
+ */
+router.post('/organizations/:id/recalculate-usage', async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const usage = await UsageService.recalculateUsage(id);
+
+    res.json({
+      success: true,
+      message: 'Usage recalculated successfully',
+      data: usage
+    });
+  } catch (error) {
+    console.error('Recalculate usage error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to recalculate usage'
     });
   }
 });

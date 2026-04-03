@@ -7,7 +7,8 @@ import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
 import organizationService from '@/services/organizationService';
 import { Button, Input, Card, CardBody, Spinner } from '@/components/ui';
-import { Check, ArrowLeft } from 'lucide-react';
+import { CheckoutModal } from '@/components/billing';
+import { Check, ArrowLeft, CreditCard } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const organizationSchema = z.object({
@@ -19,6 +20,8 @@ export default function OnboardingPage() {
   const [loading, setLoading] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState(null);
   const [planLoading, setPlanLoading] = useState(true);
+  const [showCheckout, setShowCheckout] = useState(false);
+  const [organizationData, setOrganizationData] = useState(null);
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -74,8 +77,15 @@ export default function OnboardingPage() {
               id: plan._id,
               _id: plan._id,
               name: plan.displayName || plan.name,
+              slug: plan.slug,
+              tier: plan.tier,
+              monthlyPrice: plan.monthlyPrice,
+              yearlyPrice: plan.yearlyPrice,
               price: cycleFromUrl === 'yearly' ? plan.yearlyPrice : plan.monthlyPrice,
               billingCycle: cycleFromUrl || 'monthly',
+              currency: plan.currency,
+              limits: plan.limits,
+              features: plan.features,
             });
           }
         } catch (error) {
@@ -90,7 +100,35 @@ export default function OnboardingPage() {
     }
   }, [location.state, searchParams]);
 
+  // Check if plan is paid (requires payment)
+  const isPaidPlan = selectedPlan && (
+    (selectedPlan.monthlyPrice !== undefined && selectedPlan.monthlyPrice > 0) ||
+    (selectedPlan.yearlyPrice !== undefined && selectedPlan.yearlyPrice > 0)
+  );
+
+  // Debug: Log plan data
+  useEffect(() => {
+    if (selectedPlan) {
+      console.log('Selected Plan:', selectedPlan);
+      console.log('Is Paid Plan:', isPaidPlan);
+      console.log('Monthly Price:', selectedPlan.monthlyPrice);
+      console.log('Yearly Price:', selectedPlan.yearlyPrice);
+    }
+  }, [selectedPlan, isPaidPlan]);
+
   const handleCreateOrganization = async (data) => {
+    // If it's a paid plan, show checkout modal instead of creating directly
+    if (isPaidPlan) {
+      setOrganizationData(data);
+      setShowCheckout(true);
+      return;
+    }
+
+    // Free plan - create organization directly
+    await createOrganization(data);
+  };
+
+  const createOrganization = async (data) => {
     setLoading(true);
     try {
       const response = await organizationService.createOrganization({
@@ -116,6 +154,21 @@ export default function OnboardingPage() {
       toast.error(errorMessage);
       setLoading(false);
     }
+  };
+
+  const handleCheckoutSuccess = async (paymentData) => {
+    // Payment successful - now create the organization
+    setShowCheckout(false);
+    toast.success('Payment successful! Creating your organization...');
+
+    if (organizationData) {
+      await createOrganization(organizationData);
+    }
+  };
+
+  const handleCheckoutCancel = () => {
+    setShowCheckout(false);
+    setOrganizationData(null);
   };
 
   if (planLoading) {
@@ -156,9 +209,14 @@ export default function OnboardingPage() {
                     <div>
                       <p className="text-sm text-gray-600">Selected Plan</p>
                       <p className="font-semibold text-primary-600">{selectedPlan.name}</p>
-                      <p className="text-sm text-gray-500">
-                        ₹{selectedPlan.price}/{selectedPlan.billingCycle === 'monthly' ? 'month' : 'year'}
-                      </p>
+                      {selectedPlan.monthlyPrice > 0 && (
+                        <p className="text-sm text-gray-500">
+                          ₹{selectedPlan.price}/{selectedPlan.billingCycle === 'monthly' ? 'month' : 'year'}
+                        </p>
+                      )}
+                      {selectedPlan.monthlyPrice === 0 && (
+                        <p className="text-sm text-green-600 font-medium">Free Plan</p>
+                      )}
                     </div>
                     <Link
                       to="/"
@@ -166,6 +224,22 @@ export default function OnboardingPage() {
                     >
                       Change Plan
                     </Link>
+                  </div>
+                </div>
+              )}
+
+              {/* Payment Required Notice for Paid Plans */}
+              {isPaidPlan && !showCheckout && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">
+                  <div className="flex items-start gap-3">
+                    <CreditCard className="h-5 w-5 text-amber-600 mt-0.5" />
+                    <div>
+                      <p className="font-medium text-amber-800">Payment Required</p>
+                      <p className="text-sm text-amber-700 mt-1">
+                        This plan requires payment. After entering your organization name,
+                        you'll be prompted to complete payment before your organization is created.
+                      </p>
+                    </div>
                   </div>
                 </div>
               )}
@@ -199,13 +273,41 @@ export default function OnboardingPage() {
                   size="lg"
                   loading={loading}
                 >
-                  Create Organization
+                  {isPaidPlan ? 'Continue to Payment' : 'Create Organization'}
                 </Button>
               </form>
+
+              {/* Free Plan Option */}
+              {isPaidPlan && (
+                <div className="mt-4 text-center">
+                  <p className="text-sm text-gray-500">
+                    Not ready to pay?{' '}
+                    <Link
+                      to="/onboarding"
+                      className="text-primary-600 hover:text-primary-700 font-medium"
+                    >
+                      Start with Free Plan
+                    </Link>
+                  </p>
+                </div>
+              )}
             </CardBody>
           </Card>
         </div>
       </div>
+
+      {/* Checkout Modal */}
+      {selectedPlan && (
+        <CheckoutModal
+          isOpen={showCheckout}
+          onClose={() => setShowCheckout(false)}
+          plan={selectedPlan}
+          billingPeriod={selectedPlan.billingCycle || 'monthly'}
+          organization={{ name: organizationData?.name, owner: user }}
+          onSuccess={handleCheckoutSuccess}
+          onCancel={handleCheckoutCancel}
+        />
+      )}
     </div>
   );
 }

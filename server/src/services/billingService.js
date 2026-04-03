@@ -354,6 +354,63 @@ const RazorpayService = {
   },
 
   /**
+   * Get or create customer
+   */
+  async getOrCreateCustomer(organization, user) {
+    if (organization.razorpayCustomerId) {
+      try {
+        const customer = await this.request(`/customers/${organization.razorpayCustomerId}`);
+        return { customerId: customer.id, existing: true };
+      } catch (error) {
+        // Customer not found, create new one
+        if (error.message.includes('not found')) {
+          return this.createCustomer(organization, user);
+        }
+        throw error;
+      }
+    }
+    return this.createCustomer(organization, user);
+  },
+
+  /**
+   * Create order for checkout (one-time or first subscription payment)
+   */
+  async createOrder(organization, plan, billingPeriod = 'monthly') {
+    if (!this.isConfigured()) throw new Error('Razorpay not configured');
+
+    try {
+      const amount = billingPeriod === 'yearly'
+        ? (plan.yearlyPrice || plan.monthlyPrice * 12) * 100 // Convert to paise
+        : plan.monthlyPrice * 100;
+
+      const order = await this.request('/orders', 'POST', {
+        amount,
+        currency: plan.currency?.code || 'INR',
+        payment_capture: 1, // Auto capture
+        notes: {
+          organizationId: organization._id.toString(),
+          plan: plan.slug,
+          billingPeriod
+        }
+      });
+
+      return {
+        orderId: order.id,
+        amount: order.amount,
+        currency: order.currency,
+        keyId: RAZORPAY_KEY_ID,
+        prefill: {
+          name: organization.name,
+          email: organization.owner?.email
+        }
+      };
+    } catch (error) {
+      console.error('Razorpay create order error:', error);
+      throw error;
+    }
+  },
+
+  /**
    * Create subscription
    */
   async createSubscription(organization, plan, billingPeriod = 'monthly') {
@@ -383,10 +440,41 @@ const RazorpayService = {
         subscriptionId: subscription.id,
         status: subscription.status,
         currentPeriodStart: new Date(subscription.current_start * 1000),
-        currentPeriodEnd: new Date(subscription.current_end * 1000)
+        currentPeriodEnd: new Date(subscription.current_end * 1000),
+        shortUrl: subscription.short_url
       };
     } catch (error) {
       console.error('Razorpay create subscription error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Update subscription (plan change)
+   */
+  async updateSubscription(subscriptionId, newPlanId, billingPeriod = 'monthly') {
+    if (!this.isConfigured()) throw new Error('Razorpay not configured');
+
+    try {
+      // Razorpay doesn't support direct plan changes, so we need to:
+      // 1. Cancel current subscription at end of cycle
+      // 2. Create new subscription
+      // This is handled at a higher level in the billing service
+
+      const subscription = await this.request(`/subscriptions/${subscriptionId}`, 'PATCH', {
+        plan_id: newPlanId,
+        notes: {
+          updated: new Date().toISOString()
+        }
+      });
+
+      return {
+        subscriptionId: subscription.id,
+        status: subscription.status,
+        currentPeriodEnd: new Date(subscription.current_end * 1000)
+      };
+    } catch (error) {
+      console.error('Razorpay update subscription error:', error);
       throw error;
     }
   },
@@ -406,10 +494,51 @@ const RazorpayService = {
 
       return {
         status: subscription.status,
-        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null
+        canceledAt: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
+        cancelAtPeriodEnd: subscription.cancel_at_cycle_end || false
       };
     } catch (error) {
       console.error('Razorpay cancel subscription error:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Reactivate subscription (undo cancellation)
+   * Note: Razorpay doesn't support reactivation directly - need to create new subscription
+   */
+  async reactivateSubscription(subscriptionId) {
+    if (!this.isConfigured()) throw new Error('Razorpay not configured');
+
+    // Razorpay doesn't support reactivation of cancelled subscriptions
+    // This needs to be handled at a higher level by creating a new subscription
+    throw new Error('Razorpay does not support subscription reactivation. Create a new subscription instead.');
+  },
+
+  /**
+   * Get payment methods (cards, UPI)
+   */
+  async getPaymentMethods(customerId) {
+    if (!this.isConfigured()) throw new Error('Razorpay not configured');
+
+    try {
+      // Razorpay stores payment methods as tokens
+      const tokens = await this.request(`/customers/${customerId}/tokens`);
+
+      return tokens.items?.map(token => ({
+        id: token.id,
+        type: token.method, // 'card', 'upi', 'netbanking', 'wallet'
+        last4: token.card?.last4,
+        brand: token.card?.network,
+        expiryMonth: token.card?.expiry_month,
+        expiryYear: token.card?.expiry_year,
+        bankName: token.bank,
+        upiId: token.vpa,
+        walletType: token.wallet_name,
+        isDefault: false // Razorpay doesn't have default concept
+      })) || [];
+    } catch (error) {
+      console.error('Razorpay get payment methods error:', error);
       throw error;
     }
   },
@@ -449,15 +578,44 @@ const RazorpayService = {
     const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
 
     try {
+      // For Razorpay, payload should be raw body string, signature from X-Razorpay-Signature header
       const expectedSignature = crypto
         .createHmac('sha256', webhookSecret)
-        .update(JSON.stringify(payload))
+        .update(typeof payload === 'string' ? payload : JSON.stringify(payload))
         .digest('hex');
 
       return signature === expectedSignature;
     } catch (error) {
       console.error('Razorpay webhook verification error:', error);
       return false;
+    }
+  },
+
+  /**
+   * Fetch subscription details
+   */
+  async getSubscription(subscriptionId) {
+    if (!this.isConfigured()) throw new Error('Razorpay not configured');
+
+    try {
+      const subscription = await this.request(`/subscriptions/${subscriptionId}`);
+
+      return {
+        id: subscription.id,
+        status: subscription.status,
+        planId: subscription.plan_id,
+        customerId: subscription.customer_id,
+        currentStart: new Date(subscription.current_start * 1000),
+        currentEnd: new Date(subscription.current_end * 1000),
+        endedAt: subscription.ended_at ? new Date(subscription.ended_at * 1000) : null,
+        chargeAt: subscription.charge_at,
+        totalCount: subscription.total_count,
+        paidCount: subscription.paid_count,
+        remainingCount: subscription.remaining_count
+      };
+    } catch (error) {
+      console.error('Razorpay get subscription error:', error);
+      throw error;
     }
   }
 };
@@ -499,11 +657,70 @@ const BillingService = {
   },
 
   /**
+   * Get or create customer
+   */
+  async getOrCreateCustomer(organization, user, provider = 'stripe') {
+    const service = this.getProvider(provider);
+    return service.getOrCreateCustomer(organization, user);
+  },
+
+  /**
+   * Create order for checkout (Razorpay) or checkout session (Stripe)
+   */
+  async createCheckout(organization, plan, billingPeriod, provider = 'stripe', returnUrl) {
+    if (provider === 'stripe') {
+      // For Stripe, create a checkout session
+      const customerId = organization.stripeCustomerId;
+      const priceId = billingPeriod === 'yearly' ? plan.yearlyStripePriceId : plan.monthlyStripePriceId;
+
+      if (!priceId) {
+        throw new Error(`Stripe price ID not configured for plan ${plan.slug}`);
+      }
+
+      const session = await StripeService.stripeClient.checkout.sessions.create({
+        customer: customerId,
+        payment_method_types: ['card'],
+        line_items: [{
+          price: priceId,
+          quantity: 1
+        }],
+        mode: 'subscription',
+        success_url: `${returnUrl}?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${returnUrl}?canceled=true`,
+        metadata: {
+          organizationId: organization._id.toString(),
+          plan: plan.slug,
+          billingPeriod
+        }
+      });
+
+      return {
+        sessionId: session.id,
+        url: session.url
+      };
+    }
+
+    if (provider === 'razorpay') {
+      return RazorpayService.createOrder(organization, plan, billingPeriod);
+    }
+
+    throw new Error(`Unknown provider: ${provider}`);
+  },
+
+  /**
    * Create subscription
    */
   async createSubscription(organization, plan, billingPeriod, provider = 'stripe') {
     const service = this.getProvider(provider);
     return service.createSubscription(organization, plan, billingPeriod);
+  },
+
+  /**
+   * Update subscription (plan change)
+   */
+  async updateSubscription(subscriptionId, newPriceId, provider) {
+    const service = this.getProvider(provider);
+    return service.updateSubscription(subscriptionId, newPriceId);
   },
 
   /**
@@ -519,11 +736,7 @@ const BillingService = {
    */
   async reactivateSubscription(subscriptionId, provider) {
     const service = this.getProvider(provider);
-    if (provider === 'stripe') {
-      return service.reactivateSubscription(subscriptionId);
-    }
-    // Razorpay doesn't have a reactivate endpoint
-    throw new Error('Razorpay does not support subscription reactivation');
+    return service.reactivateSubscription(subscriptionId);
   },
 
   /**
@@ -538,11 +751,8 @@ const BillingService = {
    * Get payment methods
    */
   async getPaymentMethods(customerId, provider) {
-    if (provider === 'stripe') {
-      return StripeService.getPaymentMethods(customerId);
-    }
-    // Razorpay handles payment methods differently
-    throw new Error('Payment methods not supported for this provider');
+    const service = this.getProvider(provider);
+    return service.getPaymentMethods(customerId);
   },
 
   /**
@@ -550,6 +760,57 @@ const BillingService = {
    */
   async createPortalSession(customerId, returnUrl) {
     return StripeService.createPortalSession(customerId, returnUrl);
+  },
+
+  /**
+   * Get subscription details
+   */
+  async getSubscription(subscriptionId, provider) {
+    const service = this.getProvider(provider);
+    if (service.getSubscription) {
+      return service.getSubscription(subscriptionId);
+    }
+    // For Stripe
+    if (provider === 'stripe') {
+      const subscription = await StripeService.stripeClient.subscriptions.retrieve(subscriptionId);
+      return {
+        id: subscription.id,
+        status: subscription.status,
+        currentPeriodStart: new Date(subscription.current_period_start * 1000),
+        currentPeriodEnd: new Date(subscription.current_period_end * 1000),
+        cancelAtPeriodEnd: subscription.cancel_at_period_end
+      };
+    }
+    throw new Error(`Get subscription not supported for provider: ${provider}`);
+  },
+
+  /**
+   * Calculate proration for plan change
+   */
+  calculateProration(currentPlan, newPlan, billingPeriod, daysRemaining, daysInPeriod = 30) {
+    const currentPrice = billingPeriod === 'yearly'
+      ? (currentPlan.yearlyPrice || currentPlan.monthlyPrice * 12)
+      : currentPlan.monthlyPrice;
+    const newPrice = billingPeriod === 'yearly'
+      ? (newPlan.yearlyPrice || newPlan.monthlyPrice * 12)
+      : newPlan.monthlyPrice;
+
+    // Calculate credit for unused time
+    const creditAmount = Math.round((currentPrice / daysInPeriod) * daysRemaining);
+
+    // Calculate charge for new plan remaining time
+    const chargeAmount = Math.round((newPrice / daysInPeriod) * daysRemaining);
+
+    // Net amount (positive = customer pays more, negative = customer gets credit)
+    const netAmount = chargeAmount - creditAmount;
+
+    return {
+      creditAmount,
+      chargeAmount,
+      netAmount,
+      currency: currentPlan.currency?.code || 'USD',
+      needsPayment: netAmount > 0
+    };
   },
 
   /**
@@ -580,6 +841,25 @@ const BillingService = {
     if (StripeService.isConfigured()) providers.push('stripe');
     if (RazorpayService.isConfigured()) providers.push('razorpay');
     return providers;
+  },
+
+  /**
+   * Get default provider based on currency
+   */
+  getDefaultProvider(currency = 'USD') {
+    // Razorpay is preferred for INR
+    if (currency === 'INR' && RazorpayService.isConfigured()) {
+      return 'razorpay';
+    }
+    // Stripe for everything else
+    if (StripeService.isConfigured()) {
+      return 'stripe';
+    }
+    // Fallback
+    if (RazorpayService.isConfigured()) {
+      return 'razorpay';
+    }
+    return null;
   }
 };
 

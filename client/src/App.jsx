@@ -51,6 +51,9 @@ import { ClientsPage, SOPLibraryPage, PromptsPage } from '@/pages/admin';
 // Platform Admin
 import PlatformAdminDashboardPage from '@/pages/platform/PlatformAdminDashboardPage';
 
+// Billing
+import { BillingPage, PlansPage } from '@/pages/billing';
+
 // Protected Route wrapper - checks authentication AND organization
 function ProtectedRoute({ children }) {
   const { isAuthenticated, loading, user } = useAuth();
@@ -470,6 +473,26 @@ function AppRoutes() {
           element={
             <AdminRoute>
               <PromptsPage />
+            </AdminRoute>
+          }
+        />
+
+        {/* Billing (Admin only) */}
+        <Route
+          path="billing"
+          element={
+            <AdminRoute>
+              <BillingPage />
+            </AdminRoute>
+          }
+        />
+
+        {/* Billing Plans (Admin only) */}
+        <Route
+          path="billing/plans"
+          element={
+            <AdminRoute>
+              <PlansPage />
             </AdminRoute>
           }
         />

@@ -19,6 +19,7 @@ import {
   CheckCircle,
   PenTool,
   Globe2,
+  CreditCard,
 } from 'lucide-react';
 
 // Role labels for display
@@ -53,6 +54,7 @@ const navigationByRole = {
     { name: 'Clients', href: '/dashboard/clients', icon: Briefcase },
     { name: 'Projects', href: '/dashboard/projects', icon: FolderKanban },
     { name: 'Team Management', href: '/dashboard/team', icon: Users },
+    { name: 'Billing', href: '/dashboard/billing', icon: CreditCard },
     { name: 'Prompts', href: '/dashboard/prompts', icon: PenTool },
     { name: 'SOP Library', href: '/dashboard/sop-library', icon: BookOpen },
     // { name: 'Settings', href: '/dashboard/settings', icon: Settings },

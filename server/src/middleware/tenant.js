@@ -389,10 +389,6 @@ const checkOrgLimits = (resourceType) => {
           limitKey = 'maxProjects';
           currentCount = usage.projectsCount;
           break;
-        case 'landingPage':
-          limitKey = 'maxLandingPages';
-          currentCount = usage.landingPagesCount;
-          break;
         case 'storage':
           limitKey = 'storageLimitMB';
           currentCount = usage.storageUsedMB;

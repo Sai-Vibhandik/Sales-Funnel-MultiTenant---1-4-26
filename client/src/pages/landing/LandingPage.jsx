@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/context/AuthContext';
+import { motion, useAnimation, useInView, AnimatePresence } from 'framer-motion';
 import {
   ArrowRight,
   Zap,
@@ -17,7 +18,16 @@ import {
   Palette,
   Video,
   FileText,
-  BarChart3
+  BarChart3,
+  Shield,
+  Cloud,
+  Database,
+  Layout,
+  Settings,
+  Smartphone,
+  GitBranch,
+  Menu,
+  X as XClose
 } from 'lucide-react';
 import { Spinner } from '@/components/ui';
 
@@ -25,6 +35,8 @@ export default function LandingPage() {
   const [plans, setPlans] = useState([]);
   const [loading, setLoading] = useState(true);
   const [billingCycle, setBillingCycle] = useState('monthly');
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [hoveredPlan, setHoveredPlan] = useState(null);
   const { isAuthenticated, loading: authLoading, user } = useAuth();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
@@ -59,35 +71,55 @@ export default function LandingPage() {
   // Don't render if loading or if authenticated with organization (will redirect)
   if (authLoading || (isAuthenticated && user?.currentOrganization)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className="flex items-center justify-center min-h-screen bg-gray-900">
         <Spinner size="lg" />
       </div>
     );
   }
 
   const handleSelectPlan = (planId) => {
-    // If user is authenticated but has no org, go to onboarding
+    const selectedPlanData = plans.find(p => p._id === planId);
+
     if (isAuthenticated && !user?.currentOrganization) {
+      if (selectedPlanData) {
+        sessionStorage.setItem('selectedPlan', JSON.stringify({
+          id: selectedPlanData._id,
+          _id: selectedPlanData._id,
+          name: selectedPlanData.displayName || selectedPlanData.name,
+          slug: selectedPlanData.slug,
+          tier: selectedPlanData.tier,
+          monthlyPrice: selectedPlanData.monthlyPrice || 0,
+          yearlyPrice: selectedPlanData.yearlyPrice || 0,
+          price: billingCycle === 'yearly' ? selectedPlanData.yearlyPrice : selectedPlanData.monthlyPrice,
+          billingCycle: billingCycle,
+          currency: selectedPlanData.currency,
+          limits: selectedPlanData.limits,
+          features: selectedPlanData.features,
+          trialDays: selectedPlanData.trialDays || 0,
+        }));
+      }
       navigate(`/onboarding?plan=${planId}&cycle=${billingCycle}`);
     } else {
       navigate(`/register?plan=${planId}&cycle=${billingCycle}`);
     }
   };
 
-  // Helper to format features from plan
   const getPlanFeatures = (plan) => {
     const features = [];
 
-    // From features object
     if (plan.features) {
-      if (plan.features.analytics) features.push('Advanced Analytics');
-      if (plan.features.prioritySupport) features.push('Priority Support');
-      if (plan.features.customDomain) features.push('Custom Domain');
-      if (plan.features.apiAccess) features.push('API Access');
+      if (plan.features.analytics) features.push('Advanced Analytics Dashboard');
+      if (plan.features.prioritySupport) features.push('24/7 Priority Support');
+      if (plan.features.customDomain) features.push('Custom Domain Support');
+      if (plan.features.apiAccess) features.push('Full API Access');
       if (plan.features.whiteLabel) features.push('White-label Branding');
+      if (plan.features.teamManagement) features.push('Team Management');
+      if (plan.features.integrations) features.push('Third-party Integrations');
+      if (plan.features.exportData) features.push('Data Export');
+      if (plan.features.auditLogs) features.push('Audit Logs');
+      if (plan.features.sso) features.push('SSO Integration');
     }
 
-    // From limits
     if (plan.limits) {
       if (plan.limits.maxUsers === -1) {
         features.push('Unlimited Team Members');
@@ -97,11 +129,20 @@ export default function LandingPage() {
       if (plan.limits.maxProjects === -1) {
         features.push('Unlimited Projects');
       } else if (plan.limits.maxProjects) {
-        features.push(`${plan.limits.maxProjects} Projects`);
+        features.push(`Up to ${plan.limits.maxProjects} Projects`);
+      }
+      if (plan.limits.storage === -1) {
+        features.push('Unlimited Storage');
+      } else if (plan.limits.storage) {
+        features.push(`${plan.limits.storage}GB Storage`);
+      }
+      if (plan.limits.apiCalls === -1) {
+        features.push('Unlimited API Calls');
+      } else if (plan.limits.apiCalls) {
+        features.push(`${plan.limits.apiCalls.toLocaleString()} API Calls/month`);
       }
     }
 
-    // From featureList array
     if (plan.featureList && plan.featureList.length > 0) {
       plan.featureList.forEach(f => {
         if (f.included !== false) {
@@ -110,218 +151,305 @@ export default function LandingPage() {
       });
     }
 
-    return features.slice(0, 8); // Limit to 8 features
+    return features.slice(0, 8);
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-white">
+    <div className="min-h-screen bg-gray-900">
+      {/* Animated Background */}
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute -top-40 -right-40 w-80 h-80 bg-primary-600 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse"></div>
+        <div className="absolute -bottom-40 -left-40 w-80 h-80 bg-primary-400 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-2000"></div>
+        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-primary-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-pulse animation-delay-4000"></div>
+      </div>
+
       {/* Navigation */}
-      <nav className="bg-white border-b border-gray-100 sticky top-0 z-50">
+      <nav className="fixed top-0 w-full bg-gray-900/80 backdrop-blur-xl border-b border-gray-800 z-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+            <motion.div
+              initial={{ opacity: 0, x: -20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.5 }}
+              className="flex items-center"
+            >
               <Link to="/" className="cursor-pointer">
                 <div className="flex items-center gap-2">
-                  <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center shadow-lg shadow-primary-500/25">
                     <span className="text-white font-bold text-lg">GV</span>
                   </div>
-                  <span className="text-xl font-bold text-gray-900">Growth Valley</span>
+                  <span className="text-xl font-bold text-white">GrowthValley</span>
                 </div>
               </Link>
-            </div>
+            </motion.div>
+
+            {/* Desktop Menu */}
             <div className="hidden md:flex items-center space-x-8">
-              <a href="#features" className="text-gray-600 hover:text-gray-900 transition cursor-pointer">Features</a>
-              <a href="#how-it-works" className="text-gray-600 hover:text-gray-900 transition cursor-pointer">How it Works</a>
-              <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition cursor-pointer">Pricing</a>
+              {['Features', 'How it Works', 'Pricing'].map((item, index) => (
+                <motion.a
+                  key={item}
+                  href={`#${item.toLowerCase().replace(/ /g, '-')}`}
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.5, delay: index * 0.1 }}
+                  className="text-gray-300 hover:text-white transition relative group cursor-pointer"
+                >
+                  {item}
+                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-primary-500 transition-all duration-300 group-hover:w-full"></span>
+                </motion.a>
+              ))}
             </div>
-            <div className="flex items-center space-x-4">
-              <Link
-                to="/login"
-                className="text-gray-600 hover:text-gray-900 font-medium px-4 py-2 rounded-lg hover:bg-gray-50 transition cursor-pointer"
+
+            <div className="hidden md:flex items-center space-x-4">
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
               >
-                Log in
-              </Link>
-              <Link
-                to="/register"
-                className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition cursor-pointer"
+                <Link
+                  to="/login"
+                  className="text-gray-300 hover:text-white font-medium px-4 py-2 rounded-lg hover:bg-gray-800 transition cursor-pointer"
+                >
+                  Log in
+                </Link>
+              </motion.div>
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
               >
-                Get Started
-              </Link>
+                <Link
+                  to="/register"
+                  className="bg-primary-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-primary-700 transition shadow-lg shadow-primary-500/25 cursor-pointer"
+                >
+                  Start Free Trial
+                </Link>
+              </motion.div>
             </div>
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden text-white p-2"
+            >
+              {mobileMenuOpen ? <XClose className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {mobileMenuOpen && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              className="md:hidden bg-gray-900/95 backdrop-blur-xl border-b border-gray-800"
+            >
+              <div className="px-4 py-4 space-y-3">
+                {['Features', 'How it Works', 'Pricing'].map((item) => (
+                  <a
+                    key={item}
+                    href={`#${item.toLowerCase().replace(/ /g, '-')}`}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block text-gray-300 hover:text-white py-2 transition"
+                  >
+                    {item}
+                  </a>
+                ))}
+                <Link
+                  to="/login"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block text-gray-300 hover:text-white py-2 transition"
+                >
+                  Log in
+                </Link>
+                <Link
+                  to="/register"
+                  onClick={() => setMobileMenuOpen(false)}
+                  className="block bg-primary-600 text-white px-4 py-2 rounded-lg text-center"
+                >
+                  Start Free Trial
+                </Link>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </nav>
 
       {/* Hero Section */}
-      <section className="pt-20 pb-16 px-4 sm:px-6 lg:px-8">
+      <section className="pt-32 pb-20 px-4 sm:px-6 lg:px-8 relative">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center">
-            <div className="inline-flex items-center px-4 py-2 bg-primary-50 rounded-full text-primary-700 text-sm font-medium mb-6">
-              <Zap className="w-4 h-4 mr-2" />
-              Done-For-You Marketing Services
-            </div>
-            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-              Your Complete Marketing Team
-              <span className="text-primary-600 block mt-2">Without the Hiring Hassle</span>
-            </h1>
-            <p className="mt-6 text-xl text-gray-600 max-w-3xl mx-auto">
-              Get expert marketing strategy, landing pages, video editing, graphic design, and content writing —
-              all handled by our team while you focus on growing your business.
-            </p>
-            <div className="mt-10 flex flex-col sm:flex-row gap-4 justify-center">
-              <a
-                href="#pricing"
-                className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 text-white rounded-lg font-semibold text-lg hover:bg-primary-700 transition shadow-lg shadow-primary-200"
-              >
-                View Plans
-                <ArrowRight className="ml-2 w-5 h-5" />
-              </a>
-              <Link
-                to="/register"
-                className="inline-flex items-center justify-center px-8 py-4 bg-white text-gray-900 rounded-lg font-semibold text-lg border-2 border-gray-200 hover:border-gray-300 transition"
-              >
-                Contact Us
-              </Link>
-            </div>
-          </div>
-        </div>
-      </section>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.8 }}
+            className="text-center"
+          >
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.5, type: 'spring' }}
+              className="inline-flex items-center px-4 py-2 bg-primary-500/10 backdrop-blur-sm rounded-full text-primary-400 text-sm font-medium mb-6 border border-primary-500/20"
+            >
+              <Rocket className="w-4 h-4 mr-2 animate-pulse" />
+              Launch Your SaaS in Days, Not Months
+            </motion.div>
 
-      {/* Stats Section */}
-      <section className="py-12 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary-600">500+</div>
-              <div className="text-gray-600 mt-2">Projects Delivered</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary-600">98%</div>
-              <div className="text-gray-600 mt-2">Client Satisfaction</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary-600">50+</div>
-              <div className="text-gray-600 mt-2">Expert Team Members</div>
-            </div>
-            <div className="text-center">
-              <div className="text-4xl font-bold text-primary-600">24hr</div>
-              <div className="text-gray-600 mt-2">Avg Response Time</div>
-            </div>
-          </div>
+            <motion.h1
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+              className="text-4xl sm:text-5xl lg:text-7xl font-bold leading-tight"
+            >
+              <span className="text-white">
+                All-in-One SaaS Platform
+              </span>
+              <br />
+              <span className="text-primary-500">
+                for Modern Businesses
+              </span>
+            </motion.h1>
+
+            <motion.p
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.4 }}
+              className="mt-6 text-xl text-gray-400 max-w-3xl mx-auto"
+            >
+              Powerful dashboard, team collaboration, analytics, and automation tools — 
+              everything you need to scale your business efficiently.
+            </motion.p>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.8, delay: 0.6 }}
+              className="mt-10 flex flex-col sm:flex-row gap-4 justify-center"
+            >
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center px-8 py-4 bg-primary-600 text-white rounded-lg font-semibold text-lg hover:bg-primary-700 transition shadow-lg shadow-primary-500/25"
+                >
+                  Start 14-Day Free Trial
+                  <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition" />
+                </Link>
+              </motion.div>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <a
+                  href="#features"
+                  className="inline-flex items-center justify-center px-8 py-4 bg-gray-800 text-white rounded-lg font-semibold text-lg border border-gray-700 hover:bg-gray-750 transition"
+                >
+                  Watch Demo
+                  <Play className="ml-2 w-5 h-5" />
+                </a>
+              </motion.div>
+            </motion.div>
+
+            <motion.p
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.8, delay: 0.8 }}
+              className="mt-4 text-sm text-gray-500"
+            >
+              No credit card required • Cancel anytime
+            </motion.p>
+          </motion.div>
         </div>
       </section>
 
       {/* Features Section */}
-      <section id="features" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              Everything You Need for Marketing Success
+      <section id="features" className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">
+              Everything You Need to Scale
             </h2>
-            <p className="mt-4 text-xl text-gray-600">
-              A complete marketing team at your fingertips
+            <p className="mt-4 text-xl text-gray-400">
+              Powerful features designed for growing businesses
             </p>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-            <FeatureCard
-              icon={<Target className="w-6 h-6" />}
-              title="Marketing Strategy"
-              description="Complete market research, offer engineering, and traffic strategy tailored to your business goals."
-            />
-            <FeatureCard
-              icon={<FileText className="w-6 h-6" />}
-              title="Content Planning"
-              description="SEO-optimized content, ad copy, email sequences, and social media content crafted by experts."
-            />
-            <FeatureCard
-              icon={<Palette className="w-6 h-6" />}
-              title="Landing Pages"
-              description="High-converting landing pages designed and developed by our expert UI/UX team."
-            />
-            <FeatureCard
-              icon={<Video className="w-6 h-6" />}
-              title="Video Editing"
-              description="Professional video editing for ads, product demos, testimonials, and social media content."
-            />
-            <FeatureCard
-              icon={<BarChart3 className="w-6 h-6" />}
-              title="Graphic Design"
-              description="Eye-catching ad creatives, social media graphics, brand assets, and marketing materials."
-            />
-            <FeatureCard
-              icon={<Users className="w-6 h-6" />}
-              title="Dedicated Team"
-              description="Your own team of performance marketers, content writers, designers, and developers."
-            />
+            {features.map((feature, index) => (
+              <FeatureCard key={index} {...feature} index={index} />
+            ))}
           </div>
         </div>
       </section>
 
       {/* How it Works Section */}
-      <section id="how-it-works" className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-16">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
-              How It Works
+      <section id="how-it-works" className="py-20 px-4 sm:px-6 lg:px-8 relative bg-gray-800/50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">
+              Get Started in Minutes
             </h2>
-            <p className="mt-4 text-xl text-gray-600">
-              Getting started is simple
+            <p className="mt-4 text-xl text-gray-400">
+              Simple setup, powerful results
             </p>
-          </div>
+          </motion.div>
 
           <div className="grid md:grid-cols-3 gap-8">
-            <StepCard
-              number={1}
-              title="Choose Your Plan"
-              description="Select a plan that fits your needs. Each plan includes a set of marketing services and deliverables."
-            />
-            <StepCard
-              number={2}
-              title="Share Your Requirements"
-              description="Tell us about your business, goals, target audience, and we'll match you with the right team."
-            />
-            <StepCard
-              number={3}
-              title="Get Results"
-              description="Our expert team creates your marketing strategy and delivers quality work on time."
-            />
+            {steps.map((step, index) => (
+              <StepCard key={index} {...step} index={index} />
+            ))}
           </div>
         </div>
       </section>
 
       {/* Pricing Section */}
-      <section id="pricing" className="py-20 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">
+      <section id="pricing" className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">
               Simple, Transparent Pricing
             </h2>
-            <p className="mt-4 text-xl text-gray-600">
-              Choose the plan that fits your needs. No hidden fees.
+            <p className="mt-4 text-xl text-gray-400">
+              Choose the plan that fits your business
             </p>
 
             {/* Billing Toggle */}
             <div className="mt-8 flex items-center justify-center">
-              <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-gray-900' : 'text-gray-500'}`}>
+              <span className={`text-sm font-medium ${billingCycle === 'monthly' ? 'text-white' : 'text-gray-500'}`}>
                 Monthly
               </span>
-              <button
+              <motion.button
                 onClick={() => setBillingCycle(billingCycle === 'monthly' ? 'yearly' : 'monthly')}
-                className="mx-4 relative w-14 h-7 bg-gray-300 rounded-full transition-colors hover:bg-gray-400"
+                className="mx-4 relative w-14 h-7 bg-gray-700 rounded-full transition-colors hover:bg-gray-600"
+                whileTap={{ scale: 0.95 }}
               >
-                <span
-                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-white rounded-full shadow transition-transform ${
-                    billingCycle === 'yearly' ? 'translate-x-7' : ''
-                  }`}
+                <motion.span
+                  className={`absolute top-0.5 left-0.5 w-6 h-6 bg-primary-600 rounded-full shadow-lg`}
+                  animate={{ x: billingCycle === 'yearly' ? 28 : 0 }}
+                  transition={{ type: 'spring', stiffness: 500, damping: 30 }}
                 />
-              </button>
-              <span className={`text-sm font-medium ${billingCycle === 'yearly' ? 'text-gray-900' : 'text-gray-500'}`}>
+              </motion.button>
+              <span className={`text-sm font-medium ${billingCycle === 'yearly' ? 'text-white' : 'text-gray-500'}`}>
                 Yearly
-                <span className="ml-1 text-green-600 font-semibold">Save 17%</span>
+                <span className="ml-1 text-green-400 font-semibold">Save 17%</span>
               </span>
             </div>
-          </div>
+          </motion.div>
 
           {/* Pricing Cards */}
           {loading ? (
@@ -330,23 +458,26 @@ export default function LandingPage() {
             </div>
           ) : plans.length === 0 ? (
             <div className="text-center py-12">
-              <p className="text-gray-500 text-lg">Plans available soon. Please contact us for pricing.</p>
+              <p className="text-gray-400 text-lg">Plans available soon. Please contact us for pricing.</p>
               <Link
                 to="/register"
-                className="mt-4 inline-flex items-center text-primary-600 hover:text-primary-700 font-medium"
+                className="mt-4 inline-flex items-center text-primary-400 hover:text-primary-300 font-medium"
               >
                 Contact Us <ArrowRight className="ml-2 w-4 h-4" />
               </Link>
             </div>
           ) : (
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {plans.map((plan) => (
+              {plans.map((plan, index) => (
                 <PricingCard
                   key={plan._id}
                   plan={plan}
+                  index={index}
                   billingCycle={billingCycle}
                   features={getPlanFeatures(plan)}
                   onSelect={handleSelectPlan}
+                  isHovered={hoveredPlan === plan._id}
+                  onHover={setHoveredPlan}
                 />
               ))}
             </div>
@@ -354,64 +485,86 @@ export default function LandingPage() {
         </div>
       </section>
 
+      {/* Testimonials Section */}
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative bg-gray-800/50">
+        <div className="max-w-7xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">
+              Loved by Businesses Worldwide
+            </h2>
+          </motion.div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            {testimonials.map((testimonial, index) => (
+              <TestimonialCard key={index} {...testimonial} index={index} />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* FAQ Section */}
-      <section className="py-20 bg-white">
-        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
-          <h2 className="text-3xl font-bold text-gray-900 text-center mb-12">
-            Frequently Asked Questions
-          </h2>
-          <div className="space-y-6">
-            <FAQItem
-              question="What's included in each plan?"
-              answer="Each plan includes marketing strategy, content planning, landing pages, video editing, and graphic design services. The difference is in the number of projects, revisions, and priority level."
-            />
-            <FAQItem
-              question="How does the team assignment work?"
-              answer="Based on your plan, we assign a dedicated team consisting of a performance marketer, content writer, UI/UX designer, graphic designer, video editor, developer, and tester."
-            />
-            <FAQItem
-              question="Can I upgrade or downgrade my plan?"
-              answer="Yes, you can change your plan at any time. Changes will be reflected in your next billing cycle."
-            />
-            <FAQItem
-              question="How do I get started?"
-              answer="Simply choose a plan, create your account, and our team will reach out to understand your requirements and get started on your first project."
-            />
-            <FAQItem
-              question="What if I need more than what's included?"
-              answer="You can always upgrade to a higher plan, or contact us for custom enterprise solutions tailored to your specific needs."
-            />
-            <FAQItem
-              question="How long does it take to see results?"
-              answer="Most projects start within 24-48 hours of approval. Marketing strategies are typically completed within 5-7 business days, with ongoing deliverables based on your plan."
-            />
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-3xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-3xl sm:text-4xl font-bold text-white">
+              Frequently Asked Questions
+            </h2>
+          </motion.div>
+
+          <div className="space-y-4">
+            {faqs.map((faq, index) => (
+              <FAQItem key={index} {...faq} index={index} />
+            ))}
           </div>
         </div>
       </section>
 
       {/* CTA Section */}
-      <section className="py-20 bg-primary-600">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">
-            Ready to Grow Your Business?
-          </h2>
-          <p className="mt-4 text-xl text-primary-100">
-            Get your dedicated marketing team today
-          </p>
-          <div className="mt-8">
-            <Link
-              to="/register"
-              className="inline-flex items-center justify-center px-8 py-4 bg-white text-primary-600 rounded-lg font-semibold text-lg hover:bg-gray-100 transition shadow-lg"
-            >
-              Get Started Now
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Link>
-          </div>
+      <section className="py-20 px-4 sm:px-6 lg:px-8 relative">
+        <div className="max-w-4xl mx-auto">
+          <motion.div
+            initial={{ opacity: 0, scale: 0.9 }}
+            whileInView={{ opacity: 1, scale: 1 }}
+            transition={{ duration: 0.6 }}
+            viewport={{ once: true }}
+            className="relative bg-gradient-to-r from-primary-600 to-primary-700 rounded-3xl p-12 text-center overflow-hidden"
+          >
+            <div className="absolute inset-0 bg-black/20"></div>
+            <div className="relative z-10">
+              <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">
+                Ready to Scale Your Business?
+              </h2>
+              <p className="text-xl text-primary-100 mb-8">
+                Join thousands of businesses using GrowthValley
+              </p>
+              <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+                <Link
+                  to="/register"
+                  className="inline-flex items-center justify-center px-8 py-4 bg-white text-primary-600 rounded-lg font-semibold text-lg hover:bg-gray-100 transition shadow-lg"
+                >
+                  Start Free Trial
+                  <ArrowRight className="ml-2 w-5 h-5" />
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
         </div>
       </section>
 
       {/* Footer */}
-      <footer className="bg-gray-900 text-gray-400 py-12">
+      <footer className="bg-gray-900 border-t border-gray-800 py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div>
@@ -419,39 +572,40 @@ export default function LandingPage() {
                 <div className="w-10 h-10 bg-gradient-to-br from-primary-500 to-primary-700 rounded-xl flex items-center justify-center">
                   <span className="text-white font-bold text-lg">GV</span>
                 </div>
-                <span className="text-xl font-bold text-white">Growth Valley</span>
+                <span className="text-xl font-bold text-white">GrowthValley</span>
               </div>
-              <p className="text-sm">
-                Done-for-you marketing services for growing businesses.
+              <p className="text-sm text-gray-400">
+                The all-in-one SaaS platform for modern businesses.
               </p>
             </div>
             <div>
-              <h4 className="text-white font-semibold mb-4">Services</h4>
+              <h4 className="text-white font-semibold mb-4">Product</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#features" className="hover:text-white transition">Marketing Strategy</a></li>
-                <li><a href="#features" className="hover:text-white transition">Content Planning</a></li>
-                <li><a href="#features" className="hover:text-white transition">Landing Pages</a></li>
-                <li><a href="#features" className="hover:text-white transition">Video Editing</a></li>
+                <li><a href="#features" className="text-gray-400 hover:text-white transition">Features</a></li>
+                <li><a href="#pricing" className="text-gray-400 hover:text-white transition">Pricing</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">API</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Company</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition">About Us</a></li>
-                <li><a href="#" className="hover:text-white transition">Contact</a></li>
-                <li><a href="#" className="hover:text-white transition">Careers</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">About Us</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">Blog</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">Careers</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">Contact</a></li>
               </ul>
             </div>
             <div>
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-sm">
-                <li><a href="#" className="hover:text-white transition">Privacy Policy</a></li>
-                <li><a href="#" className="hover:text-white transition">Terms of Service</a></li>
-                <li><a href="#" className="hover:text-white transition">Refund Policy</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">Privacy Policy</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">Terms of Service</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">Security</a></li>
+                <li><a href="#" className="text-gray-400 hover:text-white transition">GDPR</a></li>
               </ul>
             </div>
           </div>
-          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm">
+          <div className="mt-8 pt-8 border-t border-gray-800 text-center text-sm text-gray-400">
             <p>&copy; {new Date().getFullYear()} GrowthValley. All rights reserved.</p>
           </div>
         </div>
@@ -460,115 +614,261 @@ export default function LandingPage() {
   );
 }
 
-function FeatureCard({ icon, title, description }) {
+// Feature Card Component
+function FeatureCard({ icon: Icon, title, description, index }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm hover:shadow-md transition border border-gray-100">
-      <div className="w-12 h-12 bg-primary-100 rounded-lg flex items-center justify-center text-primary-600 mb-4">
-        {icon}
-      </div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </div>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ scale: 1.05, y: -5 }}
+      className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-primary-500/50 transition-all duration-300"
+    >
+      <motion.div
+        whileHover={{ rotate: 360 }}
+        transition={{ duration: 0.5 }}
+        className="w-12 h-12 bg-primary-500/20 rounded-lg flex items-center justify-center mb-4 border border-primary-500/30"
+      >
+        <Icon className="w-6 h-6 text-primary-400" />
+      </motion.div>
+      <h3 className="text-lg font-semibold text-white mb-2">{title}</h3>
+      <p className="text-gray-400">{description}</p>
+    </motion.div>
   );
 }
 
-function StepCard({ number, title, description }) {
+// Step Card Component
+function StepCard({ number, title, description, index }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
   return (
-    <div className="text-center">
-      <div className="w-16 h-16 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6">
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.8 }}
+      animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="text-center"
+    >
+      <motion.div
+        whileHover={{ scale: 1.1, rotate: 360 }}
+        transition={{ duration: 0.5 }}
+        className="w-20 h-20 bg-primary-600 rounded-full flex items-center justify-center text-white text-2xl font-bold mx-auto mb-6 shadow-lg shadow-primary-500/25"
+      >
         {number}
-      </div>
-      <h3 className="text-xl font-semibold text-gray-900 mb-2">{title}</h3>
-      <p className="text-gray-600">{description}</p>
-    </div>
+      </motion.div>
+      <h3 className="text-xl font-semibold text-white mb-2">{title}</h3>
+      <p className="text-gray-400">{description}</p>
+    </motion.div>
   );
 }
 
-function PricingCard({ plan, billingCycle, features, onSelect }) {
+// Pricing Card Component
+function PricingCard({ plan, index, billingCycle, features, onSelect, isHovered, onHover }) {
   const price = billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice;
-  // Check if plan is popular by badge or name
   const isPopular = plan.badge?.text || plan.name?.toLowerCase().includes('pro') || plan.name?.toLowerCase().includes('enterprise');
   const planDisplayName = plan.displayName || plan.name;
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
 
   return (
-    <div className={`relative bg-white rounded-2xl shadow-lg flex flex-col ${
-      isPopular ? 'ring-2 ring-primary-600' : 'border border-gray-200'
-    }`}>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 50 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 50 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ y: -10 }}
+      onHoverStart={() => onHover(plan._id)}
+      onHoverEnd={() => onHover(null)}
+      className={`relative bg-gray-800/50 backdrop-blur-sm rounded-2xl flex flex-col border transition-all duration-300 ${
+        isPopular ? 'border-primary-500 shadow-lg shadow-primary-500/25' : 'border-gray-700 hover:border-primary-500/50'
+      }`}
+    >
       {isPopular && (
         <div className="absolute -top-4 left-1/2 transform -translate-x-1/2">
-          <span className="bg-primary-600 text-white px-4 py-1 rounded-full text-sm font-semibold">
+          <motion.span
+            initial={{ scale: 0 }}
+            animate={{ scale: 1 }}
+            className="bg-primary-600 text-white px-4 py-1 rounded-full text-sm font-semibold shadow-lg"
+          >
             Most Popular
-          </span>
+          </motion.span>
         </div>
       )}
 
       <div className="p-6 flex-1">
-        {/* Header */}
         <div className="text-center mb-4">
-          <h3 className="text-xl font-bold text-gray-900">{planDisplayName}</h3>
+          <h3 className="text-xl font-bold text-white">{planDisplayName}</h3>
           {plan.description && (
-            <p className="text-gray-500 mt-1 text-sm">{plan.description}</p>
+            <p className="text-gray-400 mt-1 text-sm">{plan.description}</p>
           )}
         </div>
 
-        {/* Price */}
         <div className="text-center mb-6">
-          <span className="text-4xl font-bold text-gray-900">₹{price || 0}</span>
-          <span className="text-gray-500">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
+          <motion.span
+            key={price}
+            initial={{ scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="text-5xl font-bold text-white"
+          >
+            ₹{price || 0}
+          </motion.span>
+          <span className="text-gray-400">/{billingCycle === 'monthly' ? 'month' : 'year'}</span>
           {billingCycle === 'yearly' && plan.monthlyPrice > 0 && plan.yearlyPrice > 0 && (
-            <div className="text-sm text-green-600 font-medium mt-1">
+            <div className="text-sm text-green-400 font-medium mt-1">
               Save ₹{(plan.monthlyPrice * 12) - (plan.yearlyPrice || 0)}/year
             </div>
           )}
         </div>
 
-        {/* Features */}
         <div className="space-y-3 mb-6">
-          {features.map((feature, index) => (
-            <div key={index} className="flex items-center">
+          {features.map((feature, idx) => (
+            <motion.div
+              key={idx}
+              initial={{ opacity: 0, x: -20 }}
+              animate={isHovered ? { opacity: 1, x: 0 } : { opacity: 1, x: 0 }}
+              transition={{ delay: idx * 0.05 }}
+              className="flex items-center"
+            >
               <Check className="w-5 h-5 text-green-500 mr-3 flex-shrink-0" />
-              <span className="text-gray-700 text-sm">{feature}</span>
-            </div>
+              <span className="text-gray-300 text-sm">{feature}</span>
+            </motion.div>
           ))}
         </div>
       </div>
 
-      {/* CTA */}
       <div className="p-6 pt-0">
-        <button
+        <motion.button
+          whileHover={{ scale: 1.05 }}
+          whileTap={{ scale: 0.95 }}
           onClick={() => onSelect(plan._id)}
           className={`w-full py-3 px-6 rounded-lg font-semibold transition ${
             isPopular
-              ? 'bg-primary-600 text-white hover:bg-primary-700'
-              : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+              ? 'bg-primary-600 text-white hover:bg-primary-700 shadow-lg shadow-primary-500/25'
+              : 'bg-gray-700 text-white hover:bg-gray-600'
           }`}
         >
-          Get Started
-        </button>
+          Start Free Trial
+        </motion.button>
       </div>
-    </div>
+    </motion.div>
   );
 }
 
-function FAQItem({ question, answer }) {
-  const [isOpen, setIsOpen] = useState(false);
+// Testimonial Card Component
+function TestimonialCard({ name, role, content, index }) {
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
 
   return (
-    <div className="border-b border-gray-200 pb-6">
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex justify-between items-center text-left"
-      >
-        <span className="text-lg font-medium text-gray-900">{question}</span>
-        <span className={`transform transition-transform ${isOpen ? 'rotate-180' : ''}`}>
-          <svg className="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-          </svg>
-        </span>
-      </button>
-      {isOpen && (
-        <p className="mt-4 text-gray-600">{answer}</p>
-      )}
-    </div>
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={isInView ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.9 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      whileHover={{ y: -5 }}
+      className="bg-gray-800/50 backdrop-blur-sm rounded-xl p-6 border border-gray-700 hover:border-primary-500/50 transition-all duration-300"
+    >
+      <div className="flex items-center gap-1 mb-4">
+        {[...Array(5)].map((_, i) => (
+          <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+        ))}
+      </div>
+      <p className="text-gray-300 mb-4">{content}</p>
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-primary-600 rounded-full flex items-center justify-center text-white font-bold">
+          {name[0]}
+        </div>
+        <div>
+          <div className="font-semibold text-white">{name}</div>
+          <div className="text-sm text-gray-400">{role}</div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
+
+// FAQ Item Component
+function FAQItem({ question, answer, index }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const ref = useRef(null);
+  const isInView = useInView(ref, { once: true });
+
+  return (
+    <motion.div
+      ref={ref}
+      initial={{ opacity: 0, y: 20 }}
+      animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
+      className="bg-gray-800/50 backdrop-blur-sm rounded-xl border border-gray-700 overflow-hidden"
+    >
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex justify-between items-center p-6 text-left"
+      >
+        <span className="text-lg font-medium text-white">{question}</span>
+        <motion.span
+          animate={{ rotate: isOpen ? 180 : 0 }}
+          transition={{ duration: 0.3 }}
+          className="text-primary-400"
+        >
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </motion.span>
+      </button>
+      <AnimatePresence>
+        {isOpen && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="px-6 pb-6"
+          >
+            <p className="text-gray-400">{answer}</p>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+}
+
+// Data arrays
+const features = [
+  { icon: Layout, title: "Modern Dashboard", description: "Intuitive, customizable dashboard with real-time metrics, KPIs, and beautiful visualizations." },
+  { icon: Users, title: "Team Collaboration", description: "Invite team members, set roles & permissions, and collaborate seamlessly in real-time." },
+  { icon: BarChart3, title: "Advanced Analytics", description: "Deep insights into user behavior, revenue trends, and business performance metrics." },
+  { icon: Cloud, title: "Cloud Storage", description: "Secure, scalable cloud storage for all your business data and files." },
+  { icon: Database, title: "Data Management", description: "Powerful data import/export, backup, and management tools." },
+  { icon: Shield, title: "Enterprise Security", description: "Bank-level encryption, SSO, 2FA, and compliance with industry standards." },
+  { icon: Smartphone, title: "Mobile Ready", description: "Fully responsive design that works perfectly on any device." },
+  { icon: Settings, title: "Custom Workflows", description: "Build custom automations and workflows without writing code." },
+  { icon: GitBranch, title: "Version Control", description: "Track changes, rollback updates, and maintain audit trails." }
+];
+
+const steps = [
+  { number: 1, title: "Sign Up Free", description: "Create your account in 30 seconds. No credit card required for the 14-day trial." },
+  { number: 2, title: "Set Up Your Workspace", description: "Invite your team, customize settings, and connect your tools." },
+  { number: 3, title: "Start Scaling", description: "Access all features, track analytics, and grow your business." }
+];
+
+const testimonials = [
+  { name: "Sarah Johnson", role: "CEO, TechStartup", content: "GrowthValley has transformed how we manage our business. The analytics and team collaboration features are game-changing." },
+  { name: "Michael Chen", role: "CTO, InnovateLabs", content: "The best SaaS platform we've used. Incredible performance, amazing support, and constant updates." },
+  { name: "Emily Rodriguez", role: "Product Manager, FutureSoft", content: "Our team productivity increased by 200% after switching to GrowthValley. Highly recommended!" }
+];
+
+const faqs = [
+  { question: "Do I need a credit card to start the free trial?", answer: "No! You can start your 14-day free trial without providing any payment information. If you love the platform, you can upgrade anytime." },
+  { question: "Can I switch plans later?", answer: "Absolutely! You can upgrade, downgrade, or cancel your plan at any time. Changes take effect immediately." },
+  { question: "Is my data secure?", answer: "Yes, we use bank-level 256-bit encryption, regular security audits, and comply with GDPR and CCPA regulations." },
+  { question: "Do you offer API access?", answer: "Yes, all plans include API access. Higher-tier plans come with increased rate limits and dedicated API support." },
+  { question: "What kind of support do you offer?", answer: "All plans include email support. Premium plans include priority support, dedicated account manager, and 24/7 phone support." },
+  { question: "Can I bring my existing data?", answer: "Yes! We provide data import tools and migration support to help you seamlessly transition to GrowthValley." }
+];
