@@ -1,8 +1,10 @@
 const LandingPage = require('../models/LandingPage');
 const Project = require('../models/Project');
 const Task = require('../models/Task');
+const User = require('../models/User');
 const { completeStage, getStageStatus } = require('../middleware/stageGating');
 const { hasProjectAccess } = require('../utils/auth');
+const emailService = require('../services/emailService');
 
 const checkProjectAccess = async (projectId, user) => {
   const project = await Project.findOne({
@@ -484,10 +486,11 @@ const generateLandingPageTasks = async (project, landingPage, userId) => {
 
   const createdTasks = await Task.insertMany(tasks);
 
-  // Send notifications if assignees exist
+  // Send notifications and emails if assignees exist
   const Notification = require('../models/Notification');
   for (const task of createdTasks) {
     if (task.assignedTo) {
+      // Create in-app notification
       await Notification.create({
         recipient: task.assignedTo,
         type: 'task_assigned',
@@ -497,6 +500,13 @@ const generateLandingPageTasks = async (project, landingPage, userId) => {
         organizationId: project.organizationId,
         taskId: task._id
       });
+
+      // Send email notification (async, don't block)
+      const assignedUser = await User.findById(task.assignedTo).select('name email');
+      if (assignedUser) {
+        emailService.sendTaskAssignmentNotification(task, project, assignedUser, { name: 'System', _id: userId })
+          .catch(err => console.error('Failed to send task assignment email:', err));
+      }
     }
   }
 

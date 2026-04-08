@@ -7,6 +7,7 @@ const Offer = require('../models/Offer');
 const TrafficStrategy = require('../models/TrafficStrategy');
 const CreativeStrategy = require('../models/Creative');
 const Membership = require('../models/Membership');
+const emailService = require('./emailService');
 
 // SOP References for different task types
 const SOP_REFERENCES = {
@@ -1271,7 +1272,7 @@ async function sendTaskAssignmentNotifications(tasks, project) {
     }
   }
 
-  // Send notifications
+  // Send notifications and emails
   for (const [userId, userTasks] of Object.entries(tasksByUser)) {
     const taskCount = userTasks.length;
     const projectDisplay = project.projectName || project.businessName;
@@ -1284,6 +1285,20 @@ async function sendTaskAssignmentNotifications(tasks, project) {
       projectId: project._id,
       organizationId: project.organizationId
     });
+
+    // Send email notification (async, don't block)
+    const assignedUser = await User.findById(userId).select('name email');
+    if (assignedUser) {
+      // Send email for each task
+      for (const task of userTasks) {
+        emailService.sendTaskAssignmentNotification(
+          task,
+          project,
+          assignedUser,
+          { name: 'System' }
+        ).catch(err => console.error('Failed to send task assignment email:', err));
+      }
+    }
   }
 }
 

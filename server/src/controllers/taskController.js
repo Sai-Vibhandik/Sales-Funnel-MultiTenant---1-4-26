@@ -772,6 +772,17 @@ exports.testerReview = async (req, res, next) => {
         projectId: task.projectId?._id || task.projectId,
         organizationId: req.organizationId
       });
+
+      // Send email notification (async, don't block)
+      const assignedUser = await User.findById(task.assignedTo._id || task.assignedTo).select('name email');
+      if (assignedUser) {
+        emailService.sendTaskAssignmentNotification(
+          task,
+          task.projectId,
+          assignedUser,
+          req.user
+        ).catch(err => console.error('Failed to send task notification email:', err));
+      }
     }
 
     // If content is finalized, find the paired design task and copy the approved content
@@ -1061,6 +1072,17 @@ exports.testerReview = async (req, res, next) => {
             projectId: task.projectId._id || task.projectId,
             organizationId: req.organizationId
           });
+
+          // Send email notification (async, don't block)
+          const developerUser = await User.findById(developerId).select('name email');
+          if (developerUser) {
+            emailService.sendTaskAssignmentNotification(
+              { _id: developmentTask?._id, taskTitle: 'Development Task', taskType: 'development' },
+              project,
+              developerUser,
+              { name: 'System' }
+            ).catch(err => console.error('Failed to send developer task assignment email:', err));
+          }
         }
       }
     }
@@ -1327,6 +1349,17 @@ exports.marketerReview = async (req, res, next) => {
             projectId: task.projectId._id || task.projectId,
             organizationId: req.organizationId
           });
+
+          // Send email notification (async, don't block)
+          const designerUser = await User.findById(targetTeamMember._id || targetTeamMember).select('name email');
+          if (designerUser) {
+            emailService.sendTaskAssignmentNotification(
+              designTask,
+              task.projectId,
+              designerUser,
+              { name: 'System' }
+            ).catch(err => console.error('Failed to send design task assignment email:', err));
+          }
         } else if (targetTeamMember) {
           // No matching design task found, but still notify the designer
           await Notification.create({
@@ -1337,6 +1370,17 @@ exports.marketerReview = async (req, res, next) => {
             projectId: task.projectId._id || task.projectId,
             organizationId: req.organizationId
           });
+
+          // Send email notification (async, don't block)
+          const designerUser = await User.findById(targetTeamMember._id || targetTeamMember).select('name email');
+          if (designerUser) {
+            emailService.sendTaskAssignmentNotification(
+              { taskTitle: `${isVideoTask ? 'Video Editing' : 'Design'} Task`, taskType: isVideoTask ? 'video_editing' : 'graphic_design' },
+              task.projectId,
+              designerUser,
+              { name: 'System' }
+            ).catch(err => console.error('Failed to send design task assignment email:', err));
+          }
         }
       }
     }
@@ -1392,6 +1436,17 @@ exports.marketerReview = async (req, res, next) => {
               projectId: task.projectId._id || task.projectId,
               organizationId: req.organizationId
             });
+
+            // Send email notification (async, don't block)
+            const developerUser = await User.findById(developerId).select('name email');
+            if (developerUser) {
+              emailService.sendTaskAssignmentNotification(
+                developmentTask,
+                task.projectId,
+                developerUser,
+                { name: 'System' }
+              ).catch(err => console.error('Failed to send developer task assignment email:', err));
+            }
           }
         }
       }
@@ -1456,6 +1511,17 @@ exports.assignTask = async (req, res, next) => {
         projectId: task.projectId._id,
         organizationId: req.organizationId
       });
+
+      // Send email notification (async, don't block)
+      const assignedUser = await User.findById(assignedTo).select('name email');
+      if (assignedUser) {
+        emailService.sendTaskAssignmentNotification(
+          task,
+          task.projectId,
+          assignedUser,
+          req.user
+        ).catch(err => console.error('Failed to send task assignment email:', err));
+      }
     }
 
     res.status(200).json({

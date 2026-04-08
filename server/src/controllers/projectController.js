@@ -1402,7 +1402,7 @@ exports.completeLandingPageStage = async (req, res, next) => {
 
       const createdTasks = await Task.insertMany([designTask, devTask]);
 
-      // Send notifications for assigned users
+      // Send notifications and emails for assigned users
       for (const task of createdTasks) {
         if (task.assignedTo) {
           await Notification.create({
@@ -1414,6 +1414,13 @@ exports.completeLandingPageStage = async (req, res, next) => {
             organizationId: project.organizationId,
             taskId: task._id
           });
+
+          // Send email notification (async, don't block)
+          const assignedUser = await User.findById(task.assignedTo).select('name email');
+          if (assignedUser) {
+            emailService.sendTaskAssignmentNotification(task, project, assignedUser, { name: 'System', _id: userId })
+              .catch(err => console.error('Failed to send task assignment email:', err));
+          }
         }
       }
 

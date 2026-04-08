@@ -13,7 +13,7 @@ const {
  */
 
 /**
- * Send notification to platform admins about new organization registration
+ * Send notification to organization owner and platform admins about new registration
  * @param {Object} organization - The created organization
  * @param {Object} owner - The organization owner (user)
  * @param {Object} plan - The selected plan
@@ -29,36 +29,44 @@ const sendOrgRegistrationNotification = async (organization, owner, plan) => {
     const platformAdmins = await User.find({ role: 'platform_admin', isActive: true });
 
     console.log('Platform admins found:', platformAdmins?.length || 0);
-
-    // Also send to the organization owner for testing/notification
-    const recipients = [...(platformAdmins || [])];
-
-    // Add owner to recipients for welcome email
-    if (owner && owner.email) {
-      console.log('Also sending welcome email to owner:', owner.email);
-      recipients.push({ email: owner.email, name: owner.name, _id: owner._id });
+    if (platformAdmins?.length > 0) {
+      console.log('Platform admin emails:', platformAdmins.map(a => a.email));
     }
-
-    if (recipients.length === 0) {
-      console.log('No recipients found to notify - skipping email');
-      return;
-    }
-
-    console.log('Sending emails to:', recipients.map(r => r.email));
 
     const { subject, html } = orgRegistrationTemplate(organization, owner, plan);
 
-    // Send to all recipients
-    const emailPromises = recipients.map(recipient =>
-      sendEmail({
-        email: recipient.email,
-        subject,
+    // Send to organization owner (confirmation email)
+    if (owner && owner.email) {
+      console.log('Sending confirmation email to owner:', owner.email);
+      await sendEmail({
+        email: owner.email,
+        subject: `Welcome to ${organization.name || 'Growth Valley'}!`,
         html
-      })
-    );
+      });
+      console.log(`Confirmation email sent to owner: ${owner.email}`);
+    }
 
-    await Promise.all(emailPromises);
-    console.log(`Organization registration notification sent to ${recipients.length} recipient(s)`);
+    // Send to platform admins (notification about new registration)
+    if (platformAdmins && platformAdmins.length > 0) {
+      for (const admin of platformAdmins) {
+        if (admin.email) {
+          try {
+            console.log('Sending notification to platform admin:', admin.email);
+            await sendEmail({
+              email: admin.email,
+              subject: `[Admin] New Organization: ${organization.name}`,
+              html
+            });
+            console.log(`Notification sent to platform admin: ${admin.email}`);
+          } catch (adminError) {
+            // Don't fail if one admin email fails
+            console.error(`Failed to send to platform admin ${admin.email}:`, adminError.message);
+          }
+        }
+      }
+    }
+
+    console.log('=== sendOrgRegistrationNotification completed ===');
   } catch (error) {
     console.error('Error sending org registration notification:', error);
     console.error('Error stack:', error.stack);
