@@ -450,7 +450,7 @@ const generateLandingPageTasks = async (project, landingPage, userId) => {
     createdBy: userId,
     status: 'design_pending',
     strategyContext,
-    contextLink: `${process.env.CLIENT_URL}/landing-page-strategy?projectId=${project._id}&landingPageId=${landingPage._id}`
+    contextLink: `${process.env.CLIENT_URL || 'http://localhost:5173'}/landing-page-strategy?projectId=${project._id}&landingPageId=${landingPage._id}`
   };
 
   // Create development task
@@ -477,7 +477,7 @@ const generateLandingPageTasks = async (project, landingPage, userId) => {
     status: 'development_pending',
     description: 'This task will become active after the design is approved by the tester and marketer.',
     strategyContext,
-    contextLink: `${process.env.CLIENT_URL}/landing-page-strategy?projectId=${project._id}&landingPageId=${landingPage._id}`
+    contextLink: `${process.env.CLIENT_URL || 'http://localhost:5173'}/landing-page-strategy?projectId=${project._id}&landingPageId=${landingPage._id}`
   };
 
   tasks.push(designTask, devTask);

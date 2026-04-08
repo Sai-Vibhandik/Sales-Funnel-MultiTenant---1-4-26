@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import { Button, Input, Card, CardBody } from '@/components/ui';
+import { Button, Input, PasswordInput, Card, CardBody } from '@/components/ui';
 import growthValleyLogo from '@/assets/growth-valley-logo.webp';
 
 const loginSchema = z.object({
@@ -66,9 +66,8 @@ export default function LoginPage() {
                 {...register('email')}
               />
 
-              <Input
+              <PasswordInput
                 label="Password"
-                type="password"
                 placeholder="••••••••"
                 error={errors.password?.message}
                 {...register('password')}

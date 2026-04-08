@@ -3,7 +3,8 @@ const {
   orgRegistrationTemplate,
   teamInvitationTemplate,
   taskAssignmentTemplate,
-  projectAssignmentTemplate
+  projectAssignmentTemplate,
+  teamMemberCreatedTemplate
 } = require('../utils/emailTemplates');
 
 /**
@@ -72,8 +73,15 @@ const sendOrgRegistrationNotification = async (organization, owner, plan) => {
  * @param {Object} inviter - The user who sent the invitation
  */
 const sendTeamInvitation = async (invitation, organization, inviter) => {
+  console.log('=== sendTeamInvitation called ===');
+  console.log('Invitation:', invitation?.email, invitation?._id);
+  console.log('Organization:', organization?.name);
+  console.log('Inviter:', inviter?.name, inviter?.email);
+
   try {
     const { subject, html } = teamInvitationTemplate(invitation, organization, inviter);
+
+    console.log('Template generated, sending email to:', invitation.email);
 
     await sendEmail({
       email: invitation.email,
@@ -84,6 +92,7 @@ const sendTeamInvitation = async (invitation, organization, inviter) => {
     console.log(`Team invitation email sent to ${invitation.email}`);
   } catch (error) {
     console.error('Error sending team invitation email:', error);
+    console.error('Error stack:', error.stack);
     // Don't throw - email failures should not block the main operation
   }
 };
@@ -136,9 +145,40 @@ const sendProjectAssignmentNotification = async (project, assignedUser, role, as
   }
 };
 
+/**
+ * Send team member created notification email
+ * @param {Object} user - The newly created user
+ * @param {Object} organization - The organization
+ * @param {Object} createdBy - The admin who created the user
+ * @param {string} temporaryPassword - The temporary password (optional)
+ */
+const sendTeamMemberCreatedNotification = async (user, organization, createdBy, temporaryPassword = null) => {
+  console.log('=== sendTeamMemberCreatedNotification called ===');
+  console.log('User:', user?.name, user?.email);
+  console.log('Organization:', organization?.name);
+  console.log('Created by:', createdBy?.name);
+
+  try {
+    const { subject, html } = teamMemberCreatedTemplate(user, organization, createdBy, temporaryPassword);
+
+    await sendEmail({
+      email: user.email,
+      subject,
+      html
+    });
+
+    console.log(`Team member created notification sent to ${user.email}`);
+  } catch (error) {
+    console.error('Error sending team member created notification:', error);
+    console.error('Error stack:', error.stack);
+    // Don't throw - email failures should not block the main operation
+  }
+};
+
 module.exports = {
   sendOrgRegistrationNotification,
   sendTeamInvitation,
   sendTaskAssignmentNotification,
-  sendProjectAssignmentNotification
+  sendProjectAssignmentNotification,
+  sendTeamMemberCreatedNotification
 };

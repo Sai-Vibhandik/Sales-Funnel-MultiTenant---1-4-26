@@ -3,7 +3,7 @@ import ReactDOM from 'react-dom';
 import { toast } from 'sonner';
 import { authService, projectService } from '@/services/api';
 import { useAuth } from '@/context/AuthContext';
-import { Spinner, Button, Badge, Input } from '@/components/ui';
+import { Spinner, Button, Badge, Input, PasswordInput } from '@/components/ui';
 import {
   Users,
   UserPlus,
@@ -442,8 +442,7 @@ function TeamMemberModal({ isOpen, onClose, member, onSave }) {
               {!member && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Password * (min 6 characters)</label>
-                  <Input
-                    type="password"
+                  <PasswordInput
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                     placeholder="Enter password"

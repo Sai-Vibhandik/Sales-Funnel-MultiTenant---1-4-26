@@ -1346,7 +1346,7 @@ exports.completeLandingPageStage = async (req, res, next) => {
         offer: offer?.bonuses?.map(b => b.title).join(', ') || ''
       };
 
-      const contextLink = `${process.env.CLIENT_URL}/projects/${id}/strategy-summary`;
+      const contextLink = `${process.env.CLIENT_URL || 'http://localhost:5173'}/projects/${id}/strategy-summary`;
 
       // Get UI/UX designer from either new array field or legacy field
       const uiuxDesignerId = project.assignedTeam?.uiUxDesigners?.[0]?._id ||

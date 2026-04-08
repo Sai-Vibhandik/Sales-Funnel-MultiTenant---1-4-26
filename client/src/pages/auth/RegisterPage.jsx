@@ -5,7 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { toast } from 'sonner';
 import { useAuth } from '@/context/AuthContext';
-import { Button, Input, Card, CardBody, Spinner } from '@/components/ui';
+import { Button, Input, PasswordInput, Card, CardBody, Spinner } from '@/components/ui';
 import { Check, ArrowLeft } from 'lucide-react';
 import growthValleyLogo from '@/assets/growth-valley-logo.webp';
 
@@ -217,17 +217,15 @@ export default function RegisterPage() {
                     {...register('email')}
                   />
 
-                  <Input
+                  <PasswordInput
                     label="Password"
-                    type="password"
                     placeholder="••••••••"
                     error={errors.password?.message}
                     {...register('password')}
                   />
 
-                  <Input
+                  <PasswordInput
                     label="Confirm Password"
-                    type="password"
                     placeholder="••••••••"
                     error={errors.confirmPassword?.message}
                     {...register('confirmPassword')}
@@ -376,17 +374,15 @@ export default function RegisterPage() {
                       {...register('email')}
                     />
 
-                    <Input
+                    <PasswordInput
                       label="Password"
-                      type="password"
                       placeholder="••••••••"
                       error={errors.password?.message}
                       {...register('password')}
                     />
 
-                    <Input
+                    <PasswordInput
                       label="Confirm Password"
-                      type="password"
                       placeholder="••••••••"
                       error={errors.confirmPassword?.message}
                       {...register('confirmPassword')}

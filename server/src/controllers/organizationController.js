@@ -710,6 +710,13 @@ exports.inviteMember = async (req, res) => {
 
     await session.commitTransaction();
 
+    console.log('=== Team invitation created ===');
+    console.log('Invitation ID:', invitation[0]._id);
+    console.log('Invitation email:', invitation[0].email);
+    console.log('Invitation token:', invitation[0].token);
+    console.log('Organization:', organization.name);
+    console.log('Invited by:', req.user.name, req.user.email);
+
     // Send invitation email (async, don't block)
     emailService.sendTeamInvitation(invitation[0], organization, req.user)
       .catch(err => console.error('Failed to send team invitation email:', err));

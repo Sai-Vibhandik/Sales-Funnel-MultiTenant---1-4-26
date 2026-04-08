@@ -47,7 +47,7 @@ const orgRegistrationTemplate = (organization, owner, plan) => {
     </div>
 
     <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
-      You can view more details in the <a href="${process.env.FRONTEND_URL || 'https://growthvalley.com'}/admin" style="color: #4F46E5;">Admin Dashboard</a>.
+      You can view more details in the <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/admin" style="color: #4F46E5;">Admin Dashboard</a>.
     </p>
   `;
 

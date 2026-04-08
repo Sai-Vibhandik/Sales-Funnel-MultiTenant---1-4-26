@@ -6,7 +6,7 @@ const baseTemplate = require('./baseTemplate');
  */
 
 const teamInvitationTemplate = (invitation, organization, inviter) => {
-  const acceptUrl = `${process.env.FRONTEND_URL || 'https://growthvalley.com'}/invite/${invitation.token}`;
+  const acceptUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/invite/${invitation.token}`;
 
   // Format role for display
   const formatRole = (role) => {

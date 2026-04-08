@@ -6,8 +6,8 @@ const baseTemplate = require('./baseTemplate');
  */
 
 const taskAssignmentTemplate = (task, project, assignedUser, assignedBy) => {
-  const taskUrl = `${process.env.FRONTEND_URL || 'https://growthvalley.com'}/tasks/${task._id}`;
-  const projectUrl = `${process.env.FRONTEND_URL || 'https://growthvalley.com'}/projects/${project._id}`;
+  const taskUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/tasks/${task._id}`;
+  const projectUrl = `${process.env.CLIENT_URL || 'http://localhost:5173'}/projects/${project._id}`;
 
   // Format task type for display
   const formatTaskType = (taskType) => {
@@ -78,7 +78,7 @@ const taskAssignmentTemplate = (task, project, assignedUser, assignedBy) => {
     </p>
 
     <p style="margin-top: 20px; font-size: 14px; color: #64748b;">
-      You can view all your tasks in your <a href="${process.env.FRONTEND_URL || 'https://growthvalley.com'}/my-tasks" style="color: #4F46E5;">Task Dashboard</a>.
+      You can view all your tasks in your <a href="${process.env.CLIENT_URL || 'http://localhost:5173'}/my-tasks" style="color: #4F46E5;">Task Dashboard</a>.
     </p>
   `;
 

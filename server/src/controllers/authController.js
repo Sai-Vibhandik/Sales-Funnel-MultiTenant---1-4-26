@@ -2,6 +2,8 @@ const User = require('../models/User');
 const jwt = require('jsonwebtoken');
 const crypto = require('crypto');
 const sendEmail = require('../utils/sendEmail');
+const emailService = require('../services/emailService');
+const Organization = require('../models/Organization');
 
 // Generate JWT Token
 const generateToken = (id) => {
@@ -387,6 +389,23 @@ exports.createTeamMember = async (req, res, next) => {
 
     // Return created user (without password)
     const createdUser = await User.findById(user._id).select('-password');
+
+    // Send welcome email to the new team member (async, don't block)
+    console.log('=== Team member created, sending email ===');
+    console.log('User:', createdUser.name, createdUser.email);
+
+    // Get organization for email
+    let organization = null;
+    if (req.user.currentOrganization) {
+      organization = await Organization.findById(req.user.currentOrganization);
+    }
+
+    emailService.sendTeamMemberCreatedNotification(
+      createdUser,
+      organization,
+      req.user,
+      password // Send temporary password so they can login
+    ).catch(err => console.error('Failed to send team member created email:', err));
 
     res.status(201).json({
       success: true,
