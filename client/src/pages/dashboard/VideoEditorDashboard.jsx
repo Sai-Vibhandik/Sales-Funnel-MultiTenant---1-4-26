@@ -306,40 +306,7 @@ export default function VideoEditorDashboard({ user }) {
     );
   }
 
-  // Show empty state when no tasks are assigned
-  if (tasks.length === 0) {
-    return (
-      <div className="space-y-6">
-        {/* Welcome Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-400 to-purple-600">
-              <Video size={24} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Video Editor Dashboard</h1>
-              <p className="text-gray-500 mt-1">
-                Welcome back, {user?.name?.split(' ')[0] || 'Editor'}!
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <EmptyState
-          icon={Video}
-          title="No video tasks assigned"
-          description="You don't have any video editing tasks assigned yet. Tasks will appear here once content is approved and ready for video production."
-          action={
-            <Button onClick={() => navigate('/dashboard/projects')}>
-              <FolderKanban size={16} className="mr-2" />
-              View Projects
-            </Button>
-          }
-        />
-      </div>
-    );
-  }
-
+  // Show dashboard with empty stats when no tasks are assigned
   const taskStatusData = getTaskStatusData();
   const tasksPerProjectData = getTasksPerProjectData();
   const recentTasks = getRecentTasks();

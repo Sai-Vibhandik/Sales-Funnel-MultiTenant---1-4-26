@@ -1,8 +1,15 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useAuth } from '@/context/AuthContext';
-import { projectService, taskService } from '@/services/api';
-import { Card, CardBody, Badge, Spinner, Button, EmptyState } from '@/components/ui';
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { projectService, taskService } from "@/services/api";
+import {
+  Card,
+  CardBody,
+  Badge,
+  Spinner,
+  Button,
+  EmptyState,
+} from "@/components/ui";
 import {
   FileText,
   FolderKanban,
@@ -21,8 +28,8 @@ import {
   PenTool,
   Sparkles,
   RefreshCw,
-} from 'lucide-react';
-import { cn, formatDate } from '@/lib/utils';
+} from "lucide-react";
+import { cn, formatDate } from "@/lib/utils";
 import {
   PieChart,
   Pie,
@@ -34,12 +41,16 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-} from 'recharts';
-import { STATUS_CONFIG, getStatusConfig, CHART_COLORS } from '@/constants/taskStatuses';
+} from "recharts";
+import {
+  STATUS_CONFIG,
+  getStatusConfig,
+  CHART_COLORS,
+} from "@/constants/taskStatuses";
 
 // Stat Card Component (matching Admin dashboard style)
 function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
-  const isPositive = changeType === 'positive';
+  const isPositive = changeType === "positive";
   return (
     <div className="stat-card-enhanced">
       <div className="flex items-start justify-between">
@@ -53,14 +64,19 @@ function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
               ) : (
                 <ArrowDownRight size={16} className="text-orange-500" />
               )}
-              <span className={cn('text-sm font-medium', isPositive ? 'text-green-600' : 'text-orange-600')}>
+              <span
+                className={cn(
+                  "text-sm font-medium",
+                  isPositive ? "text-green-600" : "text-orange-600",
+                )}
+              >
                 {change}
               </span>
               <span className="text-xs text-gray-400">vs last week</span>
             </div>
           )}
         </div>
-        <div className={cn('p-3 rounded-2xl', iconBg)}>
+        <div className={cn("p-3 rounded-2xl", iconBg)}>
           <Icon size={24} className="text-white" />
         </div>
       </div>
@@ -72,25 +88,24 @@ function StatCard({ title, value, change, changeType, icon: Icon, iconBg }) {
 function TaskCard({ task, onClick }) {
   const statusConfig = getStatusConfig(task.status);
   const creativeTypeLabels = {
-    BLOG: 'Blog Post',
-    AD_COPY: 'Ad Copy',
-    EMAIL: 'Email',
-    HEADLINE: 'Headline',
-    DESCRIPTION: 'Description',
-    SCRIPT: 'Video Script',
-    SOCIAL: 'Social Media',
-    CASE_STUDY: 'Case Study',
+    BLOG: "Blog Post",
+    AD_COPY: "Ad Copy",
+    EMAIL: "Email",
+    HEADLINE: "Headline",
+    DESCRIPTION: "Description",
+    SCRIPT: "Video Script",
+    SOCIAL: "Social Media",
+    CASE_STUDY: "Case Study",
   };
 
   return (
-    <div
-      onClick={onClick}
-      className="project-card-enhanced cursor-pointer"
-    >
+    <div onClick={onClick} className="project-card-enhanced cursor-pointer">
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <Badge className={`${statusConfig.bgColor} ${statusConfig.textColor}`}>
+            <Badge
+              className={`${statusConfig.bgColor} ${statusConfig.textColor}`}
+            >
               {statusConfig.label}
             </Badge>
             {task.creativeType && (
@@ -100,10 +115,12 @@ function TaskCard({ task, onClick }) {
             )}
           </div>
           <h3 className="font-semibold text-gray-900 truncate">
-            {task.creativeName || task.taskTitle || 'Content Task'}
+            {task.creativeName || task.taskTitle || "Content Task"}
           </h3>
           <p className="text-sm text-gray-500 truncate">
-            {task.projectId?.projectName || task.projectId?.businessName || 'Unknown Project'}
+            {task.projectId?.projectName ||
+              task.projectId?.businessName ||
+              "Unknown Project"}
           </p>
         </div>
       </div>
@@ -112,7 +129,8 @@ function TaskCard({ task, onClick }) {
       {task.contentOutput?.headline && (
         <div className="mb-3 p-2 bg-gray-50 rounded-lg">
           <p className="text-xs text-gray-500 line-clamp-2">
-            <span className="font-medium">Headline:</span> {task.contentOutput.headline}
+            <span className="font-medium">Headline:</span>{" "}
+            {task.contentOutput.headline}
           </p>
         </div>
       )}
@@ -155,7 +173,9 @@ export default function ContentWriterDashboard({ user }) {
 
       // Fetch tasks and projects in parallel
       const [tasksRes, projectsRes] = await Promise.all([
-        taskService.getMyRoleTasks ? taskService.getMyRoleTasks() : taskService.getMyTasks(),
+        taskService.getMyRoleTasks
+          ? taskService.getMyRoleTasks()
+          : taskService.getMyTasks(),
         projectService.getProjects({ limit: 50 }),
       ]);
 
@@ -166,8 +186,8 @@ export default function ContentWriterDashboard({ user }) {
       setProjects(assignedProjects);
       calculateStats(assignedTasks);
     } catch (err) {
-      console.error('Failed to load dashboard data:', err);
-      setError(err.message || 'Failed to load dashboard data');
+      console.error("Failed to load dashboard data:", err);
+      setError(err.message || "Failed to load dashboard data");
     } finally {
       setLoading(false);
     }
@@ -176,23 +196,25 @@ export default function ContentWriterDashboard({ user }) {
   const calculateStats = (taskList) => {
     // Content Planner sees tasks in content workflow statuses
     // Pending = needs to start writing (includes todo, in_progress, content_pending)
-    const pendingContent = taskList.filter(t =>
-      ['content_pending', 'todo', 'in_progress'].includes(t.status)
+    const pendingContent = taskList.filter((t) =>
+      ["content_pending", "todo", "in_progress"].includes(t.status),
     ).length;
 
     // Under Review = submitted to tester OR approved by tester (waiting for marketer)
-    const reviewContent = taskList.filter(t =>
-      ['content_submitted', 'content_approved', 'approved_by_tester'].includes(t.status)
+    const reviewContent = taskList.filter((t) =>
+      ["content_submitted", "content_approved", "approved_by_tester"].includes(
+        t.status,
+      ),
     ).length;
 
     // Rejected = needs revision
-    const rejectedContent = taskList.filter(t =>
-      t.status === 'content_rejected'
+    const rejectedContent = taskList.filter(
+      (t) => t.status === "content_rejected",
     ).length;
 
     // Completed = final approval by marketer (writer's work is fully done)
-    const completedContent = taskList.filter(t =>
-      ['content_final_approved', 'final_approved'].includes(t.status)
+    const completedContent = taskList.filter((t) =>
+      ["content_final_approved", "final_approved"].includes(t.status),
     ).length;
 
     setStats({
@@ -207,10 +229,26 @@ export default function ContentWriterDashboard({ user }) {
   // Prepare pie chart data for content status (Pending, Under Review, Completed, Rejected)
   const getTaskStatusData = () => {
     const data = [
-      { name: 'Pending', value: stats.pendingContent, color: CHART_COLORS.pending },
-      { name: 'Review', value: stats.reviewContent, color: CHART_COLORS.review },
-      { name: 'Completed', value: stats.completedContent, color: CHART_COLORS.approved },
-      { name: 'Rejected', value: stats.rejectedContent, color: CHART_COLORS.rejected },
+      {
+        name: "Pending",
+        value: stats.pendingContent,
+        color: CHART_COLORS.pending,
+      },
+      {
+        name: "Review",
+        value: stats.reviewContent,
+        color: CHART_COLORS.review,
+      },
+      {
+        name: "Completed",
+        value: stats.completedContent,
+        color: CHART_COLORS.approved,
+      },
+      {
+        name: "Rejected",
+        value: stats.rejectedContent,
+        color: CHART_COLORS.rejected,
+      },
     ];
     return data;
   };
@@ -220,13 +258,19 @@ export default function ContentWriterDashboard({ user }) {
     const projectTaskCount = {};
 
     // Group tasks by project and count by status
-    tasks.forEach(task => {
+    tasks.forEach((task) => {
       const projectId = task.projectId?._id || task.projectId;
-      const projectName = task.projectId?.projectName || task.projectId?.businessName || 'Unknown';
+      const projectName =
+        task.projectId?.projectName ||
+        task.projectId?.businessName ||
+        "Unknown";
 
       if (!projectTaskCount[projectId]) {
         projectTaskCount[projectId] = {
-          name: projectName.length > 15 ? projectName.substring(0, 15) + '...' : projectName,
+          name:
+            projectName.length > 15
+              ? projectName.substring(0, 15) + "..."
+              : projectName,
           fullName: projectName,
           total: 0,
           completed: 0,
@@ -240,13 +284,19 @@ export default function ContentWriterDashboard({ user }) {
 
       // Categorize by status - from writer's perspective
       // Workflow: content_pending → content_submitted → content_approved (tester approved) → final_approved (marketer approved)
-      if (['content_final_approved', 'final_approved'].includes(task.status)) {
+      if (["content_final_approved", "final_approved"].includes(task.status)) {
         // Final approval by marketer - writer's work is complete
         projectTaskCount[projectId].completed++;
-      } else if (['content_submitted', 'content_approved', 'approved_by_tester'].includes(task.status)) {
+      } else if (
+        [
+          "content_submitted",
+          "content_approved",
+          "approved_by_tester",
+        ].includes(task.status)
+      ) {
         // Under review: content_submitted = tester reviewing, content_approved = marketer reviewing
         projectTaskCount[projectId].review++;
-      } else if (task.status === 'content_rejected') {
+      } else if (task.status === "content_rejected") {
         // Needs revision
         projectTaskCount[projectId].rejected++;
       } else {
@@ -259,7 +309,7 @@ export default function ContentWriterDashboard({ user }) {
     return Object.values(projectTaskCount)
       .sort((a, b) => b.total - a.total)
       .slice(0, 5)
-      .map(item => ({
+      .map((item) => ({
         name: item.name,
         fullName: item.fullName,
         completed: item.completed,
@@ -278,9 +328,13 @@ export default function ContentWriterDashboard({ user }) {
 
   // Get tasks needing attention (rejected or pending)
   const getTasksNeedingAttention = () => {
-    return tasks.filter(t =>
-      ['content_rejected', 'content_pending', 'content_submitted'].includes(t.status)
-    ).slice(0, 3);
+    return tasks
+      .filter((t) =>
+        ["content_rejected", "content_pending", "content_submitted"].includes(
+          t.status,
+        ),
+      )
+      .slice(0, 3);
   };
 
   if (loading) {
@@ -309,40 +363,7 @@ export default function ContentWriterDashboard({ user }) {
     );
   }
 
-  // Show empty state when no tasks are assigned
-  if (tasks.length === 0) {
-    return (
-      <div className="space-y-6">
-        {/* Welcome Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="p-2.5 rounded-xl bg-gradient-to-br from-emerald-400 to-emerald-600">
-              <FileText size={24} className="text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">Content Planner Dashboard</h1>
-              <p className="text-gray-500 mt-1">
-                Welcome back, {user?.name?.split(' ')[0] || 'Writer'}!
-              </p>
-            </div>
-          </div>
-        </div>
-
-        <EmptyState
-          icon={FileText}
-          title="No content tasks assigned"
-          description="You don't have any content writing tasks assigned yet. Tasks will appear here once they're assigned to you."
-          action={
-            <Button onClick={() => navigate('/dashboard/projects')}>
-              <FolderKanban size={16} className="mr-2" />
-              View Projects
-            </Button>
-          }
-        />
-      </div>
-    );
-  }
-
+  // Show empty state when no tasks are assigned - but still show stats and charts
   const taskStatusData = getTaskStatusData();
   const tasksPerProjectData = getTasksPerProjectData();
   const recentTasks = getRecentTasks();
@@ -357,25 +378,31 @@ export default function ContentWriterDashboard({ user }) {
             <FileText size={24} className="text-white" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">Content Planner Dashboard</h1>
+            <h1 className="text-2xl font-bold text-gray-900">
+              Content Planner Dashboard
+            </h1>
             <p className="text-gray-500 mt-1">
-              Welcome back, {user?.name?.split(' ')[0] || 'Writer'}! Here's your content creation overview.
+              Welcome back, {user?.name?.split(" ")[0] || "Writer"}! Here's your
+              content creation overview.
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" onClick={() => navigate('/dashboard/projects')}>
+          <Button
+            variant="outline"
+            onClick={() => navigate("/dashboard/projects")}
+          >
             <FolderKanban size={18} className="mr-2" />
             Projects
           </Button>
-          <Button onClick={() => navigate('/dashboard/tasks')}>
+          <Button onClick={() => navigate("/dashboard/tasks")}>
             <PenTool size={18} className="mr-2" />
             My Tasks
           </Button>
         </div>
       </div>
 
-      {/* Stats Grid */}
+      {/* Stats Grid - Always show with 0 values if no tasks */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatCard
           title="Total Content Tasks"
@@ -386,7 +413,9 @@ export default function ContentWriterDashboard({ user }) {
         <StatCard
           title="Pending"
           value={String(stats.pendingContent)}
-          change={stats.pendingContent > 0 ? `${stats.pendingContent} awaiting` : null}
+          change={
+            stats.pendingContent > 0 ? `${stats.pendingContent} awaiting` : null
+          }
           changeType="neutral"
           icon={Clock}
           iconBg="bg-gradient-to-br from-yellow-400 to-yellow-600"
@@ -394,7 +423,7 @@ export default function ContentWriterDashboard({ user }) {
         <StatCard
           title="Under Review"
           value={String(stats.reviewContent)}
-          change={stats.reviewContent > 0 ? 'With tester' : null}
+          change={stats.reviewContent > 0 ? "With tester" : null}
           changeType="neutral"
           icon={Eye}
           iconBg="bg-gradient-to-br from-blue-400 to-blue-600"
@@ -402,7 +431,7 @@ export default function ContentWriterDashboard({ user }) {
         <StatCard
           title="Completed"
           value={String(stats.completedContent)}
-          change={stats.completedContent > 0 ? '+this week' : null}
+          change={stats.completedContent > 0 ? "+this week" : null}
           changeType="positive"
           icon={CheckCircle}
           iconBg="bg-gradient-to-br from-green-400 to-green-600"
@@ -410,14 +439,14 @@ export default function ContentWriterDashboard({ user }) {
         <StatCard
           title="Rejected"
           value={String(stats.rejectedContent)}
-          change={stats.rejectedContent > 0 ? 'Needs revision' : null}
+          change={stats.rejectedContent > 0 ? "Needs revision" : null}
           changeType="negative"
           icon={XCircle}
           iconBg="bg-gradient-to-br from-red-400 to-red-600"
         />
       </div>
 
-      {/* Charts Section */}
+      {/* Charts Section - Show with empty state if no data */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Pie Chart - Content Status */}
         <div className="lg:col-span-1 chart-container-enhanced">
@@ -427,7 +456,9 @@ export default function ContentWriterDashboard({ user }) {
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Content Progress</h3>
-              <p className="text-sm text-gray-500">Pending, Review, Completed & Rejected</p>
+              <p className="text-sm text-gray-500">
+                Pending, Review, Completed & Rejected
+              </p>
             </div>
           </div>
 
@@ -440,7 +471,9 @@ export default function ContentWriterDashboard({ user }) {
                   style={{ backgroundColor: item.color }}
                 />
                 <span className="text-xs text-gray-500">{item.name}</span>
-                <span className="text-xs font-semibold text-gray-900">{item.value}</span>
+                <span className="text-xs font-semibold text-gray-900">
+                  {item.value}
+                </span>
               </div>
             ))}
           </div>
@@ -450,7 +483,7 @@ export default function ContentWriterDashboard({ user }) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={taskStatusData.filter(item => item.value > 0)}
+                    data={taskStatusData.filter((item) => item.value > 0)}
                     cx="50%"
                     cy="50%"
                     innerRadius={52}
@@ -459,19 +492,21 @@ export default function ContentWriterDashboard({ user }) {
                     dataKey="value"
                     strokeWidth={0}
                   >
-                    {taskStatusData.filter(item => item.value > 0).map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
+                    {taskStatusData
+                      .filter((item) => item.value > 0)
+                      .map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
                   </Pie>
                   <Tooltip
                     formatter={(value, name) => [value, name]}
                     contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '10px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                      padding: '10px 14px',
-                      fontSize: '13px',
+                      backgroundColor: "white",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "10px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      padding: "10px 14px",
+                      fontSize: "13px",
                     }}
                   />
                 </PieChart>
@@ -482,6 +517,9 @@ export default function ContentWriterDashboard({ user }) {
               <div className="text-center">
                 <AlertCircle className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                 <p>No content progress data</p>
+                <p className="text-xs mt-1">
+                  Tasks will appear here once assigned
+                </p>
               </div>
             </div>
           )}
@@ -495,32 +533,40 @@ export default function ContentWriterDashboard({ user }) {
                 <BarChart3 size={20} className="text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-900">Tasks by Project</h3>
+                <h3 className="font-semibold text-gray-900">
+                  Tasks by Project
+                </h3>
                 <p className="text-sm text-gray-500">Status breakdown</p>
               </div>
             </div>
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-500" />
-                <span className="text-xs text-gray-500">Completed</span>
+            {tasksPerProjectData.length > 0 && (
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm bg-green-500" />
+                  <span className="text-xs text-gray-500">Completed</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-500" />
+                  <span className="text-xs text-gray-500">Review</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-500" />
+                  <span className="text-xs text-gray-500">Pending</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-500" />
+                  <span className="text-xs text-gray-500">Rejected</span>
+                </div>
               </div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-blue-500" />
-                <span className="text-xs text-gray-500">Review</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-yellow-500" />
-                <span className="text-xs text-gray-500">Pending</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="inline-block w-2.5 h-2.5 rounded-sm bg-red-500" />
-                <span className="text-xs text-gray-500">Rejected</span>
-              </div>
-            </div>
+            )}
           </div>
 
           {tasksPerProjectData.length > 0 ? (
-            <div style={{ height: `${Math.max(tasksPerProjectData.length * 42 + 60, 180)}px` }}>
+            <div
+              style={{
+                height: `${Math.max(tasksPerProjectData.length * 42 + 60, 180)}px`,
+              }}
+            >
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
                   data={tasksPerProjectData}
@@ -537,14 +583,14 @@ export default function ContentWriterDashboard({ user }) {
                   <XAxis
                     type="number"
                     allowDecimals={false}
-                    tick={{ fill: '#9ca3af', fontSize: 12 }}
+                    tick={{ fill: "#9ca3af", fontSize: 12 }}
                     axisLine={false}
                     tickLine={false}
                   />
                   <YAxis
                     type="category"
                     dataKey="name"
-                    tick={{ fill: '#6b7280', fontSize: 12 }}
+                    tick={{ fill: "#6b7280", fontSize: 12 }}
                     width={100}
                     axisLine={false}
                     tickLine={false}
@@ -552,27 +598,50 @@ export default function ContentWriterDashboard({ user }) {
                   <Tooltip
                     formatter={(value, name) => {
                       const labels = {
-                        completed: 'Completed',
-                        review: 'Under Review',
-                        pending: 'Pending',
-                        rejected: 'Rejected'
+                        completed: "Completed",
+                        review: "Under Review",
+                        pending: "Pending",
+                        rejected: "Rejected",
                       };
-                      return [`${value} task${value !== 1 ? 's' : ''}`, labels[name] || name];
+                      return [
+                        `${value} task${value !== 1 ? "s" : ""}`,
+                        labels[name] || name,
+                      ];
                     }}
                     contentStyle={{
-                      backgroundColor: 'white',
-                      border: '1px solid #e5e7eb',
-                      borderRadius: '10px',
-                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
-                      padding: '10px 14px',
-                      fontSize: '13px',
+                      backgroundColor: "white",
+                      border: "1px solid #e5e7eb",
+                      borderRadius: "10px",
+                      boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                      padding: "10px 14px",
+                      fontSize: "13px",
                     }}
-                    cursor={{ fill: 'rgba(0,0,0,0.04)' }}
+                    cursor={{ fill: "rgba(0,0,0,0.04)" }}
                   />
-                  <Bar dataKey="completed" stackId="a" fill="#10B981" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="review" stackId="a" fill="#3B82F6" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="pending" stackId="a" fill="#F59E0B" radius={[0, 0, 0, 0]} />
-                  <Bar dataKey="rejected" stackId="a" fill="#EF4444" radius={[0, 6, 6, 0]} />
+                  <Bar
+                    dataKey="completed"
+                    stackId="a"
+                    fill="#10B981"
+                    radius={[0, 0, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="review"
+                    stackId="a"
+                    fill="#3B82F6"
+                    radius={[0, 0, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="pending"
+                    stackId="a"
+                    fill="#F59E0B"
+                    radius={[0, 0, 0, 0]}
+                  />
+                  <Bar
+                    dataKey="rejected"
+                    stackId="a"
+                    fill="#EF4444"
+                    radius={[0, 6, 6, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -581,13 +650,16 @@ export default function ContentWriterDashboard({ user }) {
               <div className="text-center">
                 <FolderKanban className="w-8 h-8 mx-auto mb-2 text-gray-300" />
                 <p>No project data available</p>
+                <p className="text-xs mt-1">
+                  Tasks will be shown by project here
+                </p>
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Tasks Needing Attention */}
+      {/* Tasks Needing Attention - Only show if there are tasks needing attention */}
       {needsAttention.length > 0 && (
         <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
           <div className="flex items-center gap-3 mb-4">
@@ -595,10 +667,16 @@ export default function ContentWriterDashboard({ user }) {
               <Sparkles size={20} className="text-amber-600" />
             </div>
             <div>
-              <h3 className="font-medium text-amber-900">Tasks Needing Attention</h3>
+              <h3 className="font-medium text-amber-900">
+                Tasks Needing Attention
+              </h3>
               <p className="text-sm text-amber-600">
-                {stats.rejectedContent > 0 ? `${stats.rejectedContent} rejected, ` : ''}
-                {stats.reviewContent > 0 ? `${stats.reviewContent} under review, ` : ''}
+                {stats.rejectedContent > 0
+                  ? `${stats.rejectedContent} rejected, `
+                  : ""}
+                {stats.reviewContent > 0
+                  ? `${stats.reviewContent} under review, `
+                  : ""}
                 {stats.pendingContent} pending content tasks
               </p>
             </div>
@@ -613,7 +691,9 @@ export default function ContentWriterDashboard({ user }) {
                   className="bg-white rounded-lg p-3 cursor-pointer hover:shadow-md transition-shadow"
                 >
                   <div className="flex items-center gap-2 mb-1">
-                    <Badge className={`${taskStatus.bgColor} ${taskStatus.textColor}`}>
+                    <Badge
+                      className={`${taskStatus.bgColor} ${taskStatus.textColor}`}
+                    >
                       {taskStatus.label}
                     </Badge>
                   </div>
@@ -621,7 +701,8 @@ export default function ContentWriterDashboard({ user }) {
                     {task.creativeName || task.taskTitle}
                   </p>
                   <p className="text-xs text-gray-500 truncate">
-                    {task.projectId?.projectName || task.projectId?.businessName}
+                    {task.projectId?.projectName ||
+                      task.projectId?.businessName}
                   </p>
                 </div>
               );
@@ -638,11 +719,17 @@ export default function ContentWriterDashboard({ user }) {
               <PenTool size={20} className="text-white" />
             </div>
             <div>
-              <h3 className="font-semibold text-gray-900">Recent Content Tasks</h3>
+              <h3 className="font-semibold text-gray-900">
+                Recent Content Tasks
+              </h3>
               <p className="text-sm text-gray-500">Your writing assignments</p>
             </div>
           </div>
-          <Button variant="outline" size="sm" onClick={() => navigate('/dashboard/tasks')}>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate("/dashboard/tasks")}
+          >
             View All Tasks
             <ChevronRight size={16} className="ml-1" />
           </Button>
@@ -661,73 +748,37 @@ export default function ContentWriterDashboard({ user }) {
         ) : (
           <div className="text-center py-12">
             <FileText className="w-12 h-12 mx-auto text-gray-300 mb-4" />
-            <h4 className="text-lg font-medium text-gray-900 mb-2">No Content Tasks</h4>
+            <h4 className="text-lg font-medium text-gray-900 mb-2">
+              No Content Tasks Assigned
+            </h4>
             <p className="text-sm text-gray-500 mb-4">
-              You haven't been assigned any content tasks yet. Tasks will appear here once they're created.
+              You haven't been assigned any content tasks yet. Tasks will appear
+              here once they're created for your projects.
             </p>
-            <Button variant="outline" onClick={() => navigate('/dashboard/projects')}>
+            <Button
+              variant="outline"
+              onClick={() => navigate("/dashboard/projects")}
+            >
               Browse Projects
             </Button>
           </div>
         )}
       </div>
 
-      {/* Content Writing Tips */}
-      {/* <div className="chart-container-enhanced">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2.5 rounded-xl bg-gradient-to-br from-purple-400 to-purple-500">
-            <Sparkles size={20} className="text-white" />
-          </div>
-          <div>
-            <h3 className="font-semibold text-gray-900">Content Workflow</h3>
-            <p className="text-sm text-gray-500">How your content flows through the team</p>
-          </div>
-        </div>
-        <div className="flex items-center justify-between p-4 bg-gray-50 rounded-xl">
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-yellow-100 rounded-lg">
-              <PenTool size={18} className="text-yellow-600" />
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">1. Write Content</p>
-              <p className="text-xs text-gray-500">Create compelling copy</p>
-            </div>
-          </div>
-          <ChevronRight size={20} className="text-gray-300" />
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Send size={18} className="text-blue-600" />
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">2. Submit for Review</p>
-              <p className="text-xs text-gray-500">Tester reviews content</p>
-            </div>
-          </div>
-          <ChevronRight size={20} className="text-gray-300" />
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <CheckCircle size={18} className="text-green-600" />
-            </div>
-            <div>
-              <p className="font-medium text-gray-900">3. Approved</p>
-              <p className="text-xs text-gray-500">Passed to designers</p>
-            </div>
-          </div>
-        </div>
-      </div> */}
-
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <button
-          onClick={() => navigate('/dashboard/tasks')}
+          onClick={() => navigate("/dashboard/tasks")}
           className="p-4 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-2xl text-white text-left hover:shadow-lg transition-all duration-200"
         >
           <PenTool size={24} className="mb-2" />
           <p className="font-semibold">View All Tasks</p>
-          <p className="text-sm text-white/80 mt-1">See all your writing assignments</p>
+          <p className="text-sm text-white/80 mt-1">
+            See all your writing assignments
+          </p>
         </button>
         <button
-          onClick={() => navigate('/dashboard/projects')}
+          onClick={() => navigate("/dashboard/projects")}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <FolderKanban size={24} className="mb-2 text-primary-500" />
@@ -735,7 +786,7 @@ export default function ContentWriterDashboard({ user }) {
           <p className="text-sm text-gray-500 mt-1">View assigned projects</p>
         </button>
         <button
-          onClick={() => navigate('/dashboard/tasks?status=pending')}
+          onClick={() => navigate("/dashboard/tasks?status=pending")}
           className="enhanced-card p-4 text-gray-900 text-left"
         >
           <Edit size={24} className="mb-2 text-yellow-500" />
@@ -744,7 +795,7 @@ export default function ContentWriterDashboard({ user }) {
         </button>
       </div>
 
-      {/* Rejected Content Alert */}
+      {/* Rejected Content Alert - Only show if there are rejected tasks */}
       {stats.rejectedContent > 0 && (
         <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -754,14 +805,16 @@ export default function ContentWriterDashboard({ user }) {
             <div>
               <p className="font-medium text-red-900">Content Needs Revision</p>
               <p className="text-sm text-red-600">
-                You have {stats.rejectedContent} piece{stats.rejectedContent !== 1 ? 's' : ''} of content that need{stats.rejectedContent === 1 ? 's' : ''} revision.
+                You have {stats.rejectedContent} piece
+                {stats.rejectedContent !== 1 ? "s" : ""} of content that need
+                {stats.rejectedContent === 1 ? "s" : ""} revision.
               </p>
             </div>
           </div>
           <Button
             variant="outline"
             size="sm"
-            onClick={() => navigate('/dashboard/tasks?status=rejected')}
+            onClick={() => navigate("/dashboard/tasks?status=rejected")}
             className="border-red-300 text-red-700 hover:bg-red-100"
           >
             View Revisions

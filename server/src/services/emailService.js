@@ -111,10 +111,11 @@ const sendTeamInvitation = async (invitation, organization, inviter) => {
  * @param {Object} project - The project the task belongs to
  * @param {Object} assignedUser - The user assigned to the task
  * @param {Object} assignedBy - The user who assigned the task
+ * @param {Object} rejectionContext - Optional context for rejection emails
  */
-const sendTaskAssignmentNotification = async (task, project, assignedUser, assignedBy) => {
+const sendTaskAssignmentNotification = async (task, project, assignedUser, assignedBy, rejectionContext = null) => {
   try {
-    const { subject, html } = taskAssignmentTemplate(task, project, assignedUser, assignedBy);
+    const { subject, html } = taskAssignmentTemplate(task, project, assignedUser, assignedBy, rejectionContext);
 
     await sendEmail({
       email: assignedUser.email,

@@ -123,13 +123,17 @@ function ReviewTaskCard({ task, onReview }) {
 
 // Reviewed Task Card Component
 function ReviewedTaskCard({ task }) {
+  const navigate = useNavigate();
   const statusConfig = getStatusConfig(task.status);
   // Approved statuses: tester approved (ready for marketer) or fully approved
   const isApproved = ['approved_by_tester', 'final_approved', 'design_approved', 'development_approved', 'content_final_approved'].includes(task.status);
   const taskType = TASK_TYPE_LABELS[task.taskType] || task.taskType?.replace(/_/g, ' ') || 'Task';
 
   return (
-    <div className="project-card-enhanced">
+    <div
+      className="project-card-enhanced cursor-pointer"
+      onClick={() => navigate(`/dashboard/tasks/${task._id}`)}
+    >
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-2">
@@ -165,7 +169,10 @@ function ReviewedTaskCard({ task }) {
           <Button
             size="sm"
             variant="ghost"
-            onClick={() => {}}
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/dashboard/tasks/${task._id}`);
+            }}
             className="text-gray-500"
           >
             View Details
